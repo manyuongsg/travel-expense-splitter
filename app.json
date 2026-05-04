@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "project-split-and-share-mobile",
-    "slug": "project-split-and-share-mobile",
+    "name": "AssignmentApp",
+    "slug": "AssignmentApp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,7 +10,9 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#ffffff",
+      "fadeExitDuration": 1000,
+      "fadeInDuration": 1000
     },
     "ios": {
       "supportsTablet": true
@@ -23,6 +25,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
