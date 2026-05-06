@@ -1,0 +1,34 @@
+### Application Introduction
+This application is a mobile-first travel expense management system designed to bring engineering-grade precision to group financial coordination. Built with a React Native frontend and a Java backend, it allows users to securely authenticate via email or Google OAuth to manage trip budgets, track real-time expenses, and handle complex multi-currency splits.  
+
+The platform is structured to serve the entire lifecycle of a trip—from forecasting budgets for future travel plans to providing a historical audit of past expenditures and outstanding debts. By integrating automated currency exchange and a "Who Pays Whom" settlement engine, the app eliminates the friction of manual calculations, ensuring that every cent is accounted for across variable group sizes and mission-driven travel. 
+
+---
+### User Stories
+
+🔐 Authentication & Access
+Secure Multi-Method Login: As a user, I want to authenticate via email/password or Google OAuth so that my financial data remains private and accessible across devices.  
+
+Privacy Control: As a user, I want to limit the visibility of my personal images and profile details to only those I am traveling with, ensuring digital privacy.  
+
+📊 Dashboard & Overview
+Financial Command Center: As a user, I want a centralized dashboard that displays my "Total Travel Budget," "Upcoming Trip Countdown," and "Net Balance (Owed/Owing)" across all trips for quick decision-making.
+
+Historical Audit: As a user, I want to view a "History" tab of past deployments/trips to analyze spending patterns and ensure all previous debts are settled.  
+
+✈️ Trip Planning & Execution
+Future Trip Scoping: As a user, I want to create a future trip and set an estimated budget for specific categories (e.g., Transport, Food, Lodging) to forecast my total expenditure.
+
+Dynamic Group Management: As a user, I want to add or remove members from a specific trip so that the group size is accurately reflected in all split calculations.
+
+💸 Expense Splitting & Precision
+Flexible Splitting Logic: As a user, I want to split an expense equally, by percentage, or by specific amounts, so that I can accurately reflect who spent what.
+
+Precision Math: As a user, I want the system to handle complex splits (e.g., dividing $10 among 3 people) without rounding errors, ensuring the math is "audit-grade".  
+
+Settlement Engine: As a user, I want a "Who Pays Whom" summary that minimizes the number of transactions needed to settle a group’s total debt.
+
+💱 Global Utility
+Instant Currency Conversion: As a user, I want to enter an expense in a foreign currency and have it automatically converted to my home currency based on the daily exchange rate.  
+
+Offline Data Entry: As a user, I want to log expenses even when I have no internet access (common during overseas deployments/travel) and have them sync when I am back online.
