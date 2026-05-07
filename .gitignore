@@ -31,6 +31,24 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
+
+# Backend — Maven build output
+backend/target/
+
+# Backend — H2 database files (dev data, not for source control)
+backend/data/
+
+# Backend — local secrets (never commit real credentials)
+backend/src/main/resources/application-local.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Design documents (binary files, not needed to run the app)
+*.docx

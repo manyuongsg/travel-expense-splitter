@@ -1,0 +1,26 @@
+# =============================================
+# Split and Share — Configuration Template
+# =============================================
+# Copy this file to application-local.properties and fill in your values.
+# application-local.properties is gitignored and will never be committed.
+
+# ----- Database (H2 for development) -----
+spring.datasource.url=jdbc:h2:file:./data/splitandshare-dev;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+
+# ----- Uncomment for PostgreSQL (production) -----
+# spring.datasource.url=jdbc:postgresql://localhost:5432/splitandshare
+# spring.datasource.driver-class-name=org.postgresql.Driver
+# spring.datasource.username=your_db_user
+# spring.datasource.password=your_db_password
+
+# ----- JWT -----
+# Generate a secure secret with: openssl rand -base64 64
+app.jwt.secret=REPLACE_WITH_YOUR_SECRET
+
+# ----- Google OAuth (optional) -----
+app.google.client-id=YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com
