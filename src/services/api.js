@@ -1,9 +1,23 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
-// For Android emulator: 10.0.2.2 maps to your machine's localhost.
-// For iOS simulator or physical device: replace with your machine's local IP.
-export const API_BASE_URL = 'http://10.0.2.2:8080/api';
+// Dynamically resolve the backend IP from Expo's dev server host.
+// This works for both physical devices and emulators without hardcoding an IP.
+function getBaseUrl() {
+  const expoHost = Constants.expoConfig?.hostUri?.split(':')[0];
+  if (expoHost) {
+    return `http://${expoHost}:8080/api`;
+  }
+  // Fallback for Android emulator
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:8080/api';
+  }
+  return 'http://localhost:8080/api';
+}
+
+export const API_BASE_URL = getBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,
