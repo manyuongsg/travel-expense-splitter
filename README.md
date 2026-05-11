@@ -41,23 +41,20 @@ cd travel-expense-splitter
 cd backend
 ```
 
-Copy the config template and fill in your secrets:
-
-```bash
-cp src/main/resources/application.properties.example src/main/resources/application-local.properties
-```
-
-Open `application-local.properties` and set your JWT secret:
+Open `src/main/resources/application.properties` and replace the two `TODO` values:
 
 ```properties
 # Generate one with: openssl rand -base64 64
-app.jwt.secret=YOUR_SECRET_HERE
+app.jwt.secret=REPLACE_WITH_YOUR_JWT_SECRET
+
+# Only needed if using Google login
+app.google.client-id=YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com
 ```
 
 Start the backend:
 
 ```bash
-mvn clean spring-boot:run -DskipTests -Dspring.profiles.active=local
+mvn clean spring-boot:run -DskipTests
 ```
 
 The API runs on `http://localhost:8080`.  
