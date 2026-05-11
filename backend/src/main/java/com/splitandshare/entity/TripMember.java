@@ -17,6 +17,9 @@ public class TripMember {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "linked_user_id")
+    private String linkedUserId;
+
     public TripMember() {}
 
     public String getId() { return id; }
@@ -25,4 +28,6 @@ public class TripMember {
     public void setTrip(Trip trip) { this.trip = trip; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+    public String getLinkedUserId() { return linkedUserId; }
+    public void setLinkedUserId(String linkedUserId) { this.linkedUserId = linkedUserId; }
 }

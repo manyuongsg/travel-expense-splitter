@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -37,6 +39,30 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody AuthRequest.Refresh req) {
         return ResponseEntity.ok(authService.refresh(req.getRefreshToken()));
+    }
+
+    @PatchMapping("/profile")
+    public ResponseEntity<AuthResponse.UserDto> updateProfile(
+            @Valid @RequestBody AuthRequest.UpdateProfile req,
+            @AuthenticationPrincipal UserDetails principal) {
+        if (principal == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        return ResponseEntity.ok(authService.updateProfile(principal.getUsername(), req.getDisplayName()));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<Void> changePassword(
+            @Valid @RequestBody AuthRequest.ChangePassword req,
+            @AuthenticationPrincipal UserDetails principal) {
+        if (principal == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        authService.changePassword(principal.getUsername(), req.getCurrentPassword(), req.getNewPassword());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/account")
+    public ResponseEntity<Void> deleteAccount(@AuthenticationPrincipal UserDetails principal) {
+        if (principal == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        authService.deleteAccount(principal.getUsername());
+        return ResponseEntity.noContent().build();
     }
 
     @ExceptionHandler(BadCredentialsException.class)

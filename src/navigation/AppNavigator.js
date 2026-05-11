@@ -13,7 +13,9 @@ import DashboardScreen from '../screens/dashboard/DashboardScreen';
 import TripListScreen from '../screens/trips/TripListScreen';
 import CreateTripScreen from '../screens/trips/CreateTripScreen';
 import TripDetailScreen from '../screens/trips/TripDetailScreen';
+import EditTripScreen from '../screens/trips/EditTripScreen';
 import AddExpenseScreen from '../screens/expenses/AddExpenseScreen';
+import EditExpenseScreen from '../screens/expenses/EditExpenseScreen';
 import BalanceScreen from '../screens/balances/BalanceScreen';
 import FriendsScreen from '../screens/friends/FriendsScreen';
 import OverallBalancesScreen from '../screens/balances/OverallBalancesScreen';
@@ -79,10 +81,10 @@ function AppTabs() {
         name="Balances"
         component={OverallBalancesScreen}
         options={{
-          title: 'Balances',
-          tabBarLabel: 'SETTLE',
+          title: 'Account',
+          tabBarLabel: 'ACCOUNT',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="account-balance-wallet" size={size} color={color} />
+            <MaterialIcons name="person" size={size} color={color} />
           ),
         }}
       />
@@ -106,6 +108,8 @@ function AppStack() {
       <Stack.Screen name="CreateTrip" component={CreateTripScreen} options={{ title: 'New Trip' }} />
       <Stack.Screen name="TripDetail" component={TripDetailScreen} options={{ title: '' }} />
       <Stack.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: 'Add Expense' }} />
+      <Stack.Screen name="EditExpense" component={EditExpenseScreen} options={{ title: 'Edit Expense' }} />
+      <Stack.Screen name="EditTrip" component={EditTripScreen} options={{ title: 'Edit Trip' }} />
       <Stack.Screen name="TripBalances" component={BalanceScreen} options={{ title: 'Settle Up' }} />
     </Stack.Navigator>
   );

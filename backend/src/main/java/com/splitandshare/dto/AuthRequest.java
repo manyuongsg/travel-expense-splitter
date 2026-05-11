@@ -42,4 +42,21 @@ public class AuthRequest {
         public String getRefreshToken() { return refreshToken; }
         public void setRefreshToken(String refreshToken) { this.refreshToken = refreshToken; }
     }
+
+    public static class UpdateProfile {
+        @NotBlank private String displayName;
+
+        public String getDisplayName() { return displayName; }
+        public void setDisplayName(String displayName) { this.displayName = displayName; }
+    }
+
+    public static class ChangePassword {
+        @NotBlank private String currentPassword;
+        @NotBlank @Size(min = 8, message = "Password must be at least 8 characters") private String newPassword;
+
+        public String getCurrentPassword() { return currentPassword; }
+        public void setCurrentPassword(String currentPassword) { this.currentPassword = currentPassword; }
+        public String getNewPassword() { return newPassword; }
+        public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
+    }
 }

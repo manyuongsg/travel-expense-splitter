@@ -96,6 +96,6 @@ public class BalanceService {
     }
 
     private BalanceResponse.UserDto toUserDto(TripMember member) {
-        return new BalanceResponse.UserDto(member.getId(), member.getName());
+        return new BalanceResponse.UserDto(member.getId(), member.getName(), member.getLinkedUserId());
     }
 }

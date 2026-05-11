@@ -20,4 +20,17 @@ export const authService = {
     const { data } = await api.post('/auth/refresh', { refreshToken });
     return data;
   },
+
+  updateProfile: async (displayName) => {
+    const { data } = await api.patch('/auth/profile', { displayName });
+    return data;
+  },
+
+  changePassword: async (currentPassword, newPassword) => {
+    await api.post('/auth/change-password', { currentPassword, newPassword });
+  },
+
+  deleteAccount: async () => {
+    await api.delete('/auth/account');
+  },
 };

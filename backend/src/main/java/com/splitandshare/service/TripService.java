@@ -2,9 +2,11 @@ package com.splitandshare.service;
 
 import com.splitandshare.dto.TripRequest;
 import com.splitandshare.dto.TripResponse;
+import com.splitandshare.entity.Expense;
 import com.splitandshare.entity.Trip;
 import com.splitandshare.entity.TripMember;
 import com.splitandshare.entity.User;
+import com.splitandshare.repository.ExpenseRepository;
 import com.splitandshare.repository.TripRepository;
 import com.splitandshare.repository.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
@@ -19,14 +21,23 @@ public class TripService {
 
     private final TripRepository tripRepository;
     private final UserRepository userRepository;
+    private final ExpenseRepository expenseRepository;
 
-    public TripService(TripRepository tripRepository, UserRepository userRepository) {
+    public TripService(TripRepository tripRepository, UserRepository userRepository,
+                       ExpenseRepository expenseRepository) {
         this.tripRepository = tripRepository;
         this.userRepository = userRepository;
+        this.expenseRepository = expenseRepository;
     }
 
     public List<TripResponse> getAllForUser(String userId) {
-        return tripRepository.findAllByCreatedByIdOrderByCreatedAtDesc(userId).stream()
+        return tripRepository.findAllByCreatedByIdAndArchivedFalseOrderByCreatedAtDesc(userId).stream()
+            .map(this::toResponse)
+            .toList();
+    }
+
+    public List<TripResponse> getArchivedForUser(String userId) {
+        return tripRepository.findAllByCreatedByIdAndArchivedTrueOrderByCreatedAtDesc(userId).stream()
             .map(this::toResponse)
             .toList();
     }
@@ -49,9 +60,36 @@ public class TripService {
         TripMember creatorMember = new TripMember();
         creatorMember.setTrip(trip);
         creatorMember.setName(creator.getDisplayName());
+        creatorMember.setLinkedUserId(creator.getId());
         trip.getMembers().add(creatorMember);
 
         return toResponse(tripRepository.save(trip));
+    }
+
+    @Transactional
+    public TripResponse updateTrip(String tripId, TripRequest.Update req, String requestingUserId) {
+        Trip trip = findTrip(tripId);
+        assertCreator(trip, requestingUserId);
+        trip.setName(req.getName().trim());
+        trip.setBaseCurrency(req.getBaseCurrency().toUpperCase());
+        return toResponse(tripRepository.save(trip));
+    }
+
+    @Transactional
+    public TripResponse archiveTrip(String tripId, boolean archived, String requestingUserId) {
+        Trip trip = findTrip(tripId);
+        assertCreator(trip, requestingUserId);
+        trip.setArchived(archived);
+        return toResponse(tripRepository.save(trip));
+    }
+
+    @Transactional
+    public void deleteTrip(String tripId, String requestingUserId) {
+        Trip trip = findTrip(tripId);
+        assertCreator(trip, requestingUserId);
+        List<Expense> expenses = expenseRepository.findByTripIdOrderByCreatedAtDesc(tripId);
+        expenseRepository.deleteAll(expenses);
+        tripRepository.delete(trip);
     }
 
     @Transactional
@@ -96,7 +134,7 @@ public class TripService {
             .mapToLong(e -> e.getAmountCents().longValue())
             .sum();
         List<TripResponse.MemberDto> memberDtos = trip.getMembers().stream()
-            .map(m -> new TripResponse.MemberDto(m.getId(), m.getName()))
+            .map(m -> new TripResponse.MemberDto(m.getId(), m.getName(), m.getLinkedUserId()))
             .toList();
         return new TripResponse(
             trip.getId(),
@@ -105,7 +143,8 @@ public class TripService {
             trip.getCreatedAt(),
             trip.getMembers().size(),
             totalCents,
-            memberDtos
+            memberDtos,
+            trip.isArchived()
         );
     }
 }

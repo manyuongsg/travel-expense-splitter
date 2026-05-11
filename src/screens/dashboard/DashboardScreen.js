@@ -6,8 +6,9 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { tripService } from '../../services/tripService';
+import { expenseService } from '../../services/expenseService';
 import { dbService } from '../../services/dbService';
-import { formatCurrency } from '../../utils/currency';
+import { formatCurrency, HOME_CURRENCY } from '../../utils/currency';
 import { useAuth } from '../../context/AuthContext';
 import { C, F } from '../../theme/postage';
 
@@ -23,20 +24,90 @@ export default function DashboardScreen({ navigation }) {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [myBalances, setMyBalances] = useState([]);
+  const [balancesLoading, setBalancesLoading] = useState(false);
+
+  const fetchMyBalances = useCallback(async (tripList) => {
+    if (!user || tripList.length === 0) { setMyBalances([]); return; }
+    setBalancesLoading(true);
+    try {
+      const results = await Promise.all(
+        tripList.map(async (trip) => {
+          try {
+            const [data, settled] = await Promise.all([
+              tripService.getBalances(trip.id),
+              dbService.getSettledSettlements(trip.id),
+            ]);
+            const mine = (data.memberBalances ?? []).find(
+              (b) => b.user?.displayName === user.displayName
+            );
+            if (!mine) return null;
+
+            let netCents = mine.netAmountCents;
+            if (settled.size > 0) {
+              for (const s of (data.settlements ?? [])) {
+                const fromName = s.fromUser?.displayName ?? 'Unknown';
+                const toName = s.toUser?.displayName ?? 'Unknown';
+                if (!settled.has(`${fromName}|${toName}`)) continue;
+                if (fromName === user.displayName) netCents += s.amountCents;
+                if (toName === user.displayName) netCents -= s.amountCents;
+              }
+            }
+
+            if (netCents === 0) return null;
+            return {
+              tripId: trip.id,
+              tripName: trip.name,
+              currency: trip.baseCurrency,
+              netCents,
+            };
+          } catch {
+            return null;
+          }
+        })
+      );
+      const balances = results.filter(Boolean);
+
+      const uniqueCurrencies = [...new Set(balances.map((b) => b.currency).filter((c) => c !== HOME_CURRENCY))];
+      const rateMap = {};
+      if (uniqueCurrencies.length > 0) {
+        await Promise.all(
+          uniqueCurrencies.map(async (c) => {
+            try {
+              const rates = await expenseService.getExchangeRates(c, [HOME_CURRENCY]);
+              rateMap[c] = rates[HOME_CURRENCY] ?? null;
+            } catch {
+              rateMap[c] = null;
+            }
+          })
+        );
+      }
+
+      setMyBalances(balances.map((b) => ({
+        ...b,
+        homeRate: b.currency === HOME_CURRENCY ? null : (rateMap[b.currency] ?? null),
+      })));
+    } finally {
+      setBalancesLoading(false);
+    }
+  }, [user]);
 
   const fetchTrips = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     try {
       const data = await tripService.getAll();
       setTrips(data);
+      fetchMyBalances(data);
     } catch {
       const local = await dbService.getAllTrips();
-      setTrips(local.map((t) => ({ ...t, baseCurrency: t.base_currency })));
+      const mapped = local.map((t) => ({ ...t, baseCurrency: t.base_currency }));
+      setTrips(mapped);
+      fetchMyBalances(mapped);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [fetchMyBalances]);
 
   useFocusEffect(useCallback(() => { fetchTrips(); }, [fetchTrips]));
 
@@ -123,25 +194,58 @@ export default function DashboardScreen({ navigation }) {
                   {trip.memberCount ?? 0} members · {trip.baseCurrency}
                 </Text>
               </View>
-              <Text style={styles.tripAmount}>
-                {formatCurrency(trip.totalAmountCents ?? 0, trip.baseCurrency)}
-              </Text>
+              <View style={styles.totalBlock}>
+                <Text style={styles.totalLabel}>TOTAL SPENT</Text>
+                <Text style={styles.tripAmount}>
+                  {formatCurrency(trip.totalAmountCents ?? 0, trip.baseCurrency)}
+                </Text>
+              </View>
             </Pressable>
           ))
         )}
       </View>
 
-      {/* Balances shortcut */}
+      {/* Outstanding balances — current user only */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Outstanding Balances</Text>
-        <Pressable style={styles.balanceCard} onPress={() => navigation.navigate('Balances')}>
-          <MaterialIcons name="account-balance-wallet" size={20} color={C.stamp} />
-          <View style={styles.balanceInfo}>
-            <Text style={styles.balanceTitle}>View what you owe</Text>
-            <Text style={styles.balanceSub}>Check settlements across all trips</Text>
+
+        {balancesLoading ? (
+          <ActivityIndicator size="small" color={C.stamp} style={{ marginTop: 16 }} />
+        ) : myBalances.length === 0 ? (
+          <View style={styles.allSettledCard}>
+            <MaterialIcons name="check-circle-outline" size={20} color={C.positive} />
+            <Text style={styles.allSettledText}>All settled up</Text>
           </View>
-          <MaterialIcons name="chevron-right" size={18} color={C.border} />
-        </Pressable>
+        ) : (
+          myBalances.map((b) => (
+            <Pressable
+              key={b.tripId}
+              style={styles.balanceRow}
+              onPress={() => navigation.navigate('TripBalances', { tripId: b.tripId, currency: b.currency })}
+            >
+              <View style={styles.stampIcon}>
+                <MaterialIcons name="flight" size={16} color={C.stamp} />
+              </View>
+              <View style={styles.balanceInfo}>
+                <Text style={styles.balanceTitle} numberOfLines={1}>{b.tripName}</Text>
+                <Text style={styles.balanceSub}>
+                  {b.netCents < 0 ? 'you owe' : 'you are owed'}
+                </Text>
+              </View>
+              <View style={styles.balanceAmountBlock}>
+                <Text style={[styles.balanceAmount, b.netCents < 0 ? styles.negative : styles.positive]}>
+                  {b.netCents < 0 ? '-' : '+'}{formatCurrency(Math.abs(b.netCents), b.currency)}
+                </Text>
+                {b.homeRate && (
+                  <Text style={styles.balanceEquivalent}>
+                    ≈ {formatCurrency(Math.abs(Math.round(b.netCents * b.homeRate)), HOME_CURRENCY)}
+                  </Text>
+                )}
+              </View>
+              <MaterialIcons name="chevron-right" size={18} color={C.border} style={{ marginLeft: 4 }} />
+            </Pressable>
+          ))
+        )}
       </View>
     </ScrollView>
   );
@@ -202,13 +306,27 @@ const styles = StyleSheet.create({
   tripInfo: { flex: 1, marginRight: 10 },
   tripName: { fontFamily: F.serif, fontSize: 15, fontStyle: 'italic', color: C.ink },
   tripMeta: { fontFamily: F.mono, fontSize: 10, color: C.inkLight, marginTop: 3, letterSpacing: 0.5 },
+  totalBlock: { alignItems: 'flex-end' },
+  totalLabel: { fontFamily: F.mono, fontSize: 8, color: C.inkLight, letterSpacing: 1.5, marginBottom: 3 },
   tripAmount: { fontFamily: F.mono, fontSize: 14, color: C.stamp, fontWeight: '700' },
 
-  balanceCard: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: 4, padding: 16, gap: 12,
+  allSettledCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: 4, padding: 16,
   },
-  balanceInfo: { flex: 1 },
+  allSettledText: { fontFamily: F.serif, fontSize: 15, fontStyle: 'italic', color: C.inkMid },
+
+  balanceRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: 4,
+    padding: 14, marginBottom: 8,
+  },
+  balanceInfo: { flex: 1, marginRight: 10 },
   balanceTitle: { fontFamily: F.serif, fontSize: 15, fontStyle: 'italic', color: C.ink },
   balanceSub: { fontFamily: F.mono, fontSize: 10, color: C.inkLight, marginTop: 3, letterSpacing: 0.4 },
+  balanceAmountBlock: { alignItems: 'flex-end' },
+  balanceAmount: { fontFamily: F.mono, fontSize: 14, fontWeight: '700' },
+  balanceEquivalent: { fontFamily: F.mono, fontSize: 10, color: C.inkLight, letterSpacing: 0.4, marginTop: 2 },
+  positive: { color: C.positive },
+  negative: { color: C.negative },
 });

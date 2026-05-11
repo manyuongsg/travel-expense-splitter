@@ -13,6 +13,11 @@ export const expenseService = {
     return data;
   },
 
+  update: async (tripId, expenseId, payload) => {
+    const { data } = await api.put(`/trips/${tripId}/expenses/${expenseId}`, payload);
+    return data;
+  },
+
   delete: async (tripId, expenseId) => {
     await api.delete(`/trips/${tripId}/expenses/${expenseId}`);
   },

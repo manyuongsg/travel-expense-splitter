@@ -66,6 +66,35 @@ public class ExpenseService {
     }
 
     @Transactional
+    public ExpenseResponse update(String tripId, String expenseId, ExpenseRequest req, String requestingUserId) {
+        Trip trip = findTrip(tripId);
+        assertCreator(trip, requestingUserId);
+
+        Expense expense = expenseRepository.findById(expenseId)
+            .orElseThrow(() -> new NoSuchElementException("Expense not found"));
+        if (!expense.getTrip().getId().equals(tripId)) {
+            throw new AccessDeniedException("Expense does not belong to this trip");
+        }
+
+        TripMember paidBy = tripMemberRepository.findById(req.getPaidByMemberId())
+            .orElseThrow(() -> new NoSuchElementException("Member not found: " + req.getPaidByMemberId()));
+
+        BigDecimal exchangeRate = req.getExchangeRate() != null ? req.getExchangeRate() : BigDecimal.ONE;
+
+        expense.setDescription(req.getDescription());
+        expense.setAmountCents(BigDecimal.valueOf(req.getAmountCents()));
+        expense.setCurrency(req.getCurrency().toUpperCase());
+        expense.setExchangeRate(exchangeRate);
+        expense.setPaidBy(paidBy);
+        expense.setSplitType(Expense.SplitType.valueOf(req.getSplitType()));
+
+        expense.getSplits().clear();
+        expense.getSplits().addAll(buildSplits(expense, req, trip));
+
+        return toResponse(expenseRepository.save(expense));
+    }
+
+    @Transactional
     public void delete(String tripId, String expenseId, String requestingUserId) {
         Trip trip = findTrip(tripId);
         assertCreator(trip, requestingUserId);
