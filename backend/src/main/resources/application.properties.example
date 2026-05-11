@@ -1,8 +1,11 @@
 # =============================================
-# Split and Share — Configuration Template
+# Split and Share - Configuration Template
 # =============================================
-# Copy this file to application-local.properties and fill in your values.
-# application-local.properties is gitignored and will never be committed.
+# Copy this file to application.properties and fill in your values.
+# application.properties is gitignored and will never be committed.
+
+spring.application.name=split-and-share
+server.port=8080
 
 # ----- Database (H2 for development) -----
 spring.datasource.url=jdbc:h2:file:./data/splitandshare-dev;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
@@ -17,10 +20,25 @@ spring.h2.console.path=/h2-console
 # spring.datasource.driver-class-name=org.postgresql.Driver
 # spring.datasource.username=your_db_user
 # spring.datasource.password=your_db_password
+# spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
+
+# ----- JPA / Hibernate -----
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect
 
 # ----- JWT -----
-# Generate a secure secret with: openssl rand -base64 64
-app.jwt.secret=REPLACE_WITH_YOUR_SECRET
+# Generate your secret with:
+# node -e "console.log(require('crypto').randomBytes(64).toString('base64'))"
+# Must be a valid Base64 string (minimum 64 bytes when decoded).
+app.jwt.secret=REPLACE_WITH_YOUR_BASE64_SECRET
+app.jwt.expiration-ms=3600000
+app.jwt.refresh-expiration-ms=604800000
 
 # ----- Google OAuth (optional) -----
+# Only needed if using Google login. Get from Google Cloud Console.
 app.google.client-id=YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com
+
+# ----- CORS -----
+app.cors.allowed-origins=http://localhost:19006,http://10.0.2.2:19006,http://localhost:3000

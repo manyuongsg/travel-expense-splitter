@@ -41,14 +41,20 @@ cd travel-expense-splitter
 cd backend
 ```
 
-Open `src/main/resources/application.properties` and replace the two `TODO` values:
+Copy the config template and fill in your values:
+
+```bash
+cp src/main/resources/application.properties.example src/main/resources/application.properties
+```
+
+Generate a JWT secret and paste it into `application.properties`:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('base64'))"
+```
 
 ```properties
-# Generate one with: openssl rand -base64 64
-app.jwt.secret=REPLACE_WITH_YOUR_JWT_SECRET
-
-# Only needed if using Google login
-app.google.client-id=YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com
+app.jwt.secret=PASTE_YOUR_GENERATED_SECRET_HERE
 ```
 
 Start the backend:
