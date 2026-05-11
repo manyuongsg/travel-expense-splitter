@@ -44,6 +44,7 @@ backend/data/
 
 # Backend — local overrides (if you create one, keep your secrets here)
 backend/src/main/resources/application-local.properties
+backend/src/main/resources/application.properties
 
 # IDE
 .idea/
@@ -52,3 +53,4 @@ backend/src/main/resources/application-local.properties
 
 # Design documents (binary files, not needed to run the app)
 *.docx
+backend/src/main/resources/application.properties
