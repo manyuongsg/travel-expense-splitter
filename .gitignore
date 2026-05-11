@@ -1,6 +1,6 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
-# dependencies
+# Dependencies
 node_modules/
 
 # Expo
@@ -20,7 +20,7 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
-# debug
+# Debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
@@ -29,22 +29,22 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# Local env files
 .env*.local
 .env
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 
-# Backend — Maven build output
+# Backend - Maven build output
 backend/target/
 
-# Backend — H2 database files (dev data, not for source control)
+# Backend - H2 database files (dev data, not for source control)
 backend/data/
 
-# Backend — local overrides (if you create one, keep your secrets here)
-backend/src/main/resources/application-local.properties
+# Backend - contains real secrets, never commit
 backend/src/main/resources/application.properties
+backend/src/main/resources/application-local.properties
 
 # IDE
 .idea/
@@ -53,4 +53,3 @@ backend/src/main/resources/application.properties
 
 # Design documents (binary files, not needed to run the app)
 *.docx
-backend/src/main/resources/application.properties
