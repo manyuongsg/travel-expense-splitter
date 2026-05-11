@@ -32,6 +32,11 @@ public class TripController {
         return ResponseEntity.ok(tripService.getAllForUser(principal.getUsername()));
     }
 
+    @GetMapping("/archived")
+    public ResponseEntity<List<TripResponse>> getArchived(@AuthenticationPrincipal UserDetails principal) {
+        return ResponseEntity.ok(tripService.getArchivedForUser(principal.getUsername()));
+    }
+
     @GetMapping("/{tripId}")
     public ResponseEntity<TripResponse> getById(@PathVariable String tripId,
                                                  @AuthenticationPrincipal UserDetails principal) {
@@ -43,6 +48,27 @@ public class TripController {
                                                 @AuthenticationPrincipal UserDetails principal) {
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(tripService.create(req, principal.getUsername()));
+    }
+
+    @PatchMapping("/{tripId}")
+    public ResponseEntity<TripResponse> updateTrip(@PathVariable String tripId,
+                                                    @Valid @RequestBody TripRequest.Update req,
+                                                    @AuthenticationPrincipal UserDetails principal) {
+        return ResponseEntity.ok(tripService.updateTrip(tripId, req, principal.getUsername()));
+    }
+
+    @PatchMapping("/{tripId}/archive")
+    public ResponseEntity<TripResponse> archiveTrip(@PathVariable String tripId,
+                                                      @RequestBody TripRequest.Archive req,
+                                                      @AuthenticationPrincipal UserDetails principal) {
+        return ResponseEntity.ok(tripService.archiveTrip(tripId, req.isArchived(), principal.getUsername()));
+    }
+
+    @DeleteMapping("/{tripId}")
+    public ResponseEntity<Void> deleteTrip(@PathVariable String tripId,
+                                            @AuthenticationPrincipal UserDetails principal) {
+        tripService.deleteTrip(tripId, principal.getUsername());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{tripId}/members")

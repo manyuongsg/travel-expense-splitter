@@ -3,12 +3,19 @@ package com.splitandshare.service;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.splitandshare.dto.AuthRequest;
 import com.splitandshare.dto.AuthResponse;
+import com.splitandshare.entity.Expense;
+import com.splitandshare.entity.Trip;
 import com.splitandshare.entity.User;
+import com.splitandshare.repository.ExpenseRepository;
+import com.splitandshare.repository.TripRepository;
 import com.splitandshare.repository.UserRepository;
 import com.splitandshare.security.JwtService;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 public class AuthService {
@@ -17,13 +24,18 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final GoogleAuthService googleAuthService;
+    private final TripRepository tripRepository;
+    private final ExpenseRepository expenseRepository;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                       JwtService jwtService, GoogleAuthService googleAuthService) {
+                       JwtService jwtService, GoogleAuthService googleAuthService,
+                       TripRepository tripRepository, ExpenseRepository expenseRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.googleAuthService = googleAuthService;
+        this.tripRepository = tripRepository;
+        this.expenseRepository = expenseRepository;
     }
 
     public AuthResponse register(AuthRequest.Register req) {
@@ -77,6 +89,35 @@ public class AuthService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new BadCredentialsException("User not found"));
         return buildResponse(user);
+    }
+
+    public AuthResponse.UserDto updateProfile(String userId, String displayName) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.setDisplayName(displayName);
+        user = userRepository.save(user);
+        return new AuthResponse.UserDto(user.getId(), user.getEmail(), user.getDisplayName());
+    }
+
+    public void changePassword(String userId, String currentPassword, String newPassword) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new BadCredentialsException("User not found"));
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new BadCredentialsException("Current password is incorrect");
+        }
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void deleteAccount(String userId) {
+        List<Trip> trips = tripRepository.findAllByCreatedByIdOrderByCreatedAtDesc(userId);
+        for (Trip trip : trips) {
+            List<Expense> expenses = expenseRepository.findByTripIdOrderByCreatedAtDesc(trip.getId());
+            expenseRepository.deleteAll(expenses);
+        }
+        tripRepository.deleteAll(trips);
+        userRepository.deleteById(userId);
     }
 
     private AuthResponse buildResponse(User user) {

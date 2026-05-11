@@ -2,7 +2,7 @@ import * as SQLite from 'expo-sqlite';
 
 let db = null;
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 async function getDb() {
   if (!db) {
@@ -17,6 +17,7 @@ async function _initSchema() {
   const row = await db.getFirstAsync('PRAGMA user_version');
   if (row.user_version < SCHEMA_VERSION) {
     await db.execAsync(`
+      DROP TABLE IF EXISTS settled_settlements;
       DROP TABLE IF EXISTS expense_splits;
       DROP TABLE IF EXISTS expenses;
       DROP TABLE IF EXISTS trip_members;
@@ -32,7 +33,8 @@ async function _initSchema() {
     CREATE TABLE IF NOT EXISTS trips (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      base_currency TEXT NOT NULL DEFAULT 'USD',
+      base_currency TEXT NOT NULL DEFAULT 'SGD',
+      home_currency TEXT NOT NULL DEFAULT 'SGD',
       created_at INTEGER NOT NULL,
       synced INTEGER NOT NULL DEFAULT 1
     );
@@ -72,6 +74,13 @@ async function _initSchema() {
       payload TEXT NOT NULL,
       created_at INTEGER NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS settled_settlements (
+      trip_id TEXT NOT NULL,
+      from_name TEXT NOT NULL,
+      to_name TEXT NOT NULL,
+      PRIMARY KEY (trip_id, from_name, to_name)
+    );
   `);
 }
 
@@ -81,9 +90,9 @@ export const dbService = {
   saveTrip: async (trip) => {
     const database = await getDb();
     await database.runAsync(
-      `INSERT OR REPLACE INTO trips (id, name, base_currency, created_at, synced)
-       VALUES (?, ?, ?, ?, ?)`,
-      [trip.id, trip.name, trip.baseCurrency, trip.createdAt, 1]
+      `INSERT OR REPLACE INTO trips (id, name, base_currency, home_currency, created_at, synced)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [trip.id, trip.name, trip.baseCurrency, trip.homeCurrency ?? 'SGD', trip.createdAt, 1]
     );
   },
 
@@ -183,6 +192,30 @@ export const dbService = {
       if (debt.amount === 0) di++;
     }
     return settlements;
+  },
+
+  getSettledSettlements: async (tripId) => {
+    const database = await getDb();
+    const rows = await database.getAllAsync(
+      'SELECT from_name, to_name FROM settled_settlements WHERE trip_id = ?',
+      [tripId]
+    );
+    return new Set(rows.map((r) => `${r.from_name}|${r.to_name}`));
+  },
+
+  toggleSettlement: async (tripId, fromName, toName, markAsSettled) => {
+    const database = await getDb();
+    if (markAsSettled) {
+      await database.runAsync(
+        'INSERT OR REPLACE INTO settled_settlements (trip_id, from_name, to_name) VALUES (?, ?, ?)',
+        [tripId, fromName, toName]
+      );
+    } else {
+      await database.runAsync(
+        'DELETE FROM settled_settlements WHERE trip_id = ? AND from_name = ? AND to_name = ?',
+        [tripId, fromName, toName]
+      );
+    }
   },
 
   queueSync: async (entityType, entityId, operation, payload) => {

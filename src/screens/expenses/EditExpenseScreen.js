@@ -5,8 +5,6 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { expenseService } from '../../services/expenseService';
-import { dbService } from '../../services/dbService';
-import { useAuth } from '../../context/AuthContext';
 import { dollarsToCents, formatCurrency, splitEqually, HOME_CURRENCY } from '../../utils/currency';
 import Toast from 'react-native-toast-message';
 import { C, F } from '../../theme/postage';
@@ -21,33 +19,34 @@ const CATEGORIES = [
   { id: 'OTHER',         label: 'Other',           icon: 'more-horiz' },
 ];
 
-export default function AddExpenseScreen({ route, navigation }) {
+export default function EditExpenseScreen({ route, navigation }) {
   const {
     tripId,
     members = [],
     currency: tripCurrency = 'SGD',
     homeCurrency = HOME_CURRENCY,
+    expense,
   } = route.params;
-  const { user } = useAuth();
 
-  const myMemberId = useMemo(() => {
-    const linked = members.find((m) => m.linkedUserId === user?.id);
-    return linked?.id ?? members[0]?.id ?? '';
-  }, [members, user?.id]);
+  const initialCustomAmounts = useMemo(() => {
+    if (expense.splitType !== 'CUSTOM') return {};
+    return Object.fromEntries(
+      (expense.splits ?? []).map((s) => [s.owedById, (s.shareAmountCents / 100).toFixed(2)])
+    );
+  }, [expense]);
 
-  const [description, setDescription] = useState('');
-  const [amountStr, setAmountStr] = useState('');
-  const [currency, setCurrency] = useState(tripCurrency);
+  const [description, setDescription] = useState(expense.description ?? '');
+  const [amountStr, setAmountStr] = useState((expense.amountCents / 100).toFixed(2));
+  const [currency, setCurrency] = useState(expense.currency ?? tripCurrency);
   const [category, setCategory] = useState('OTHER');
-  const [paidById, setPaidById] = useState(myMemberId);
-  const [splitType, setSplitType] = useState('EQUAL');
-  const [customAmounts, setCustomAmounts] = useState({});
+  const [paidById, setPaidById] = useState(expense.paidBy?.id ?? '');
+  const [splitType, setSplitType] = useState(expense.splitType ?? 'EQUAL');
+  const [customAmounts, setCustomAmounts] = useState(initialCustomAmounts);
   const [exchangeRate, setExchangeRate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [rateLoading, setRateLoading] = useState(false);
 
   const showToggle = tripCurrency !== homeCurrency;
-  // The "other" currency — what we convert to for the hint
   const otherCurrency = currency === tripCurrency ? homeCurrency : tripCurrency;
 
   useEffect(() => {
@@ -90,11 +89,10 @@ export default function AddExpenseScreen({ route, navigation }) {
     return null;
   };
 
-  const handleAdd = async () => {
+  const handleSave = async () => {
     const error = validate();
     if (error) { Toast.show({ type: 'error', text1: error, position: 'bottom' }); return; }
     setLoading(true);
-    // payload exchangeRate converts expense currency → trip currency
     const payloadExchangeRate = currency === tripCurrency ? 1.0 : (exchangeRate ?? 1.0);
     const payload = {
       description: description.trim(),
@@ -107,21 +105,11 @@ export default function AddExpenseScreen({ route, navigation }) {
       exchangeRate: payloadExchangeRate,
     };
     try {
-      await expenseService.create(tripId, payload);
-      Toast.show({ type: 'success', text1: 'Expense added!', position: 'bottom' });
+      await expenseService.update(tripId, expense.id, payload);
+      Toast.show({ type: 'success', text1: 'Expense updated!', position: 'bottom' });
       navigation.goBack();
     } catch {
-      const localId = `local_${Date.now()}`;
-      await dbService.saveExpense({
-        id: localId, tripId, description: payload.description,
-        amountCents: payload.amountCents, currency: payload.currency,
-        exchangeRate: String(payload.exchangeRate),
-        paidByMemberId: payload.paidByMemberId, createdAt: Date.now(),
-        splits: buildSplits().map((s, i) => ({ id: `split_${localId}_${i}`, ...s, settled: false })),
-      });
-      await dbService.queueSync(tripId, localId, 'CREATE_EXPENSE', payload);
-      Toast.show({ type: 'info', text1: 'Saved offline — will sync when connected', position: 'bottom' });
-      navigation.goBack();
+      Toast.show({ type: 'error', text1: 'Could not update expense', position: 'bottom' });
     } finally {
       setLoading(false);
     }
@@ -272,12 +260,12 @@ export default function AddExpenseScreen({ route, navigation }) {
 
         <Pressable
           style={[styles.primaryBtn, loading && styles.disabledBtn]}
-          onPress={handleAdd}
+          onPress={handleSave}
           disabled={loading}
         >
           {loading
             ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.primaryBtnText}>ADD EXPENSE</Text>
+            : <Text style={styles.primaryBtnText}>SAVE CHANGES</Text>
           }
         </Pressable>
 

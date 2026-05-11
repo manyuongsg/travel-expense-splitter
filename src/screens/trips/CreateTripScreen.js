@@ -1,21 +1,22 @@
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, Pressable, StyleSheet,
-  ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, FlatList,
+  ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { tripService } from '../../services/tripService';
-import { SUPPORTED_CURRENCIES } from '../../utils/currency';
+import { SUPPORTED_CURRENCIES, HOME_CURRENCY } from '../../utils/currency';
 import Toast from 'react-native-toast-message';
 import { C, F } from '../../theme/postage';
 
 export default function CreateTripScreen({ navigation }) {
   const [name, setName] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('SGD');
+  const [homeCurrency, setHomeCurrency] = useState(HOME_CURRENCY);
   const [memberName, setMemberName] = useState('');
   const [pendingMembers, setPendingMembers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [showCurrencyPicker, setShowCurrencyPicker] = useState(false);
+  const [activePicker, setActivePicker] = useState(null); // 'base' | 'home' | null
 
   const addMember = () => {
     const trimmed = memberName.trim();
@@ -39,9 +40,9 @@ export default function CreateTripScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      const trip = await tripService.create(name.trim(), currency);
-      for (const memberName of pendingMembers) {
-        await tripService.addMember(trip.id, memberName);
+      const trip = await tripService.create(name.trim(), currency, homeCurrency);
+      for (const mn of pendingMembers) {
+        await tripService.addMember(trip.id, mn);
       }
       Toast.show({ type: 'success', text1: 'Trip created!', position: 'bottom' });
       navigation.replace('TripDetail', { tripId: trip.id, tripName: trip.name });
@@ -56,6 +57,24 @@ export default function CreateTripScreen({ navigation }) {
     }
   };
 
+  const renderPicker = (selectedValue, onSelect, key) => (
+    <ScrollView
+      style={styles.pickerList}
+      nestedScrollEnabled
+      keyboardShouldPersistTaps="handled"
+    >
+      {SUPPORTED_CURRENCIES.map((c, index) => (
+        <Pressable
+          key={c}
+          style={[styles.pickerItem, index > 0 && styles.pickerItemBorder, c === selectedValue && styles.pickerItemActive]}
+          onPress={() => { onSelect(c); setActivePicker(null); }}
+        >
+          <Text style={[styles.pickerText, c === selectedValue && styles.pickerTextActive]}>{c}</Text>
+        </Pressable>
+      ))}
+    </ScrollView>
+  );
+
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
@@ -63,37 +82,33 @@ export default function CreateTripScreen({ navigation }) {
         <Text style={styles.label}>TRIP NAME</Text>
         <TextInput
           style={styles.input}
-          placeholder="e.g. Euro Trip 2025"
+          placeholder="e.g. Tokyo Trip 2025"
           placeholderTextColor={C.border}
           value={name}
           onChangeText={setName}
         />
 
-        <Text style={styles.label}>BASE CURRENCY</Text>
-        <Pressable style={styles.selector} onPress={() => setShowCurrencyPicker((v) => !v)}>
+        <Text style={styles.label}>TRIP CURRENCY</Text>
+        <Text style={styles.hint}>the currency used at the destination</Text>
+        <Pressable
+          style={styles.selector}
+          onPress={() => setActivePicker(activePicker === 'base' ? null : 'base')}
+        >
           <Text style={styles.selectorText}>{currency}</Text>
-          <MaterialIcons name={showCurrencyPicker ? 'expand-less' : 'expand-more'} size={20} color={C.inkLight} />
+          <MaterialIcons name={activePicker === 'base' ? 'expand-less' : 'expand-more'} size={20} color={C.inkLight} />
         </Pressable>
+        {activePicker === 'base' && renderPicker(currency, setCurrency, 'base')}
 
-        {showCurrencyPicker && (
-          <View style={styles.currencyList}>
-            <FlatList
-              data={SUPPORTED_CURRENCIES}
-              keyExtractor={(c) => c}
-              scrollEnabled={false}
-              renderItem={({ item, index }) => (
-                <Pressable
-                  style={[styles.currencyItem, index > 0 && styles.currencyItemBorder, item === currency && styles.currencyItemActive]}
-                  onPress={() => { setCurrency(item); setShowCurrencyPicker(false); }}
-                >
-                  <Text style={[styles.currencyText, item === currency && styles.currencyTextActive]}>
-                    {item}
-                  </Text>
-                </Pressable>
-              )}
-            />
-          </View>
-        )}
+        <Text style={styles.label}>HOME CURRENCY</Text>
+        <Text style={styles.hint}>your home currency for exchange rate reference</Text>
+        <Pressable
+          style={styles.selector}
+          onPress={() => setActivePicker(activePicker === 'home' ? null : 'home')}
+        >
+          <Text style={styles.selectorText}>{homeCurrency}</Text>
+          <MaterialIcons name={activePicker === 'home' ? 'expand-less' : 'expand-more'} size={20} color={C.inkLight} />
+        </Pressable>
+        {activePicker === 'home' && renderPicker(homeCurrency, setHomeCurrency, 'home')}
 
         <Text style={styles.label}>ADD MEMBERS</Text>
         <Text style={styles.hint}>just a name — no account needed</Text>
@@ -150,7 +165,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: C.bg },
   container: { padding: 20, paddingBottom: 40 },
 
-  label: { fontFamily: F.mono, fontSize: 10, color: C.inkLight, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8, marginTop: 22 },
+  label: { fontFamily: F.mono, fontSize: 10, color: C.inkLight, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 4, marginTop: 22 },
   hint: { fontFamily: F.mono, fontSize: 10, color: C.inkLight, marginBottom: 8, letterSpacing: 0.5 },
   input: {
     borderBottomWidth: 1.5, borderBottomColor: C.border,
@@ -163,15 +178,15 @@ const styles = StyleSheet.create({
   },
   selectorText: { fontFamily: F.mono, fontSize: 15, color: C.ink },
 
-  currencyList: {
+  pickerList: {
     backgroundColor: C.surface, borderWidth: 1, borderColor: C.border,
-    borderRadius: 4, marginTop: 6, maxHeight: 200, overflow: 'hidden',
+    borderRadius: 4, marginTop: 6, maxHeight: 200,
   },
-  currencyItem: { paddingVertical: 10, paddingHorizontal: 16 },
-  currencyItemBorder: { borderTopWidth: 1, borderTopColor: C.divider },
-  currencyItemActive: { backgroundColor: C.stampSoft },
-  currencyText: { fontFamily: F.mono, fontSize: 13, color: C.inkMid },
-  currencyTextActive: { color: C.stamp, fontWeight: '700' },
+  pickerItem: { paddingVertical: 10, paddingHorizontal: 16 },
+  pickerItemBorder: { borderTopWidth: 1, borderTopColor: C.divider },
+  pickerItemActive: { backgroundColor: C.stampSoft },
+  pickerText: { fontFamily: F.mono, fontSize: 13, color: C.inkMid },
+  pickerTextActive: { color: C.stamp, fontWeight: '700' },
 
   row: { flexDirection: 'row', gap: 10, alignItems: 'flex-end' },
   addBtn: { backgroundColor: C.stamp, borderRadius: 3, padding: 11, justifyContent: 'center', alignItems: 'center' },

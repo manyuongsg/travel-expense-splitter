@@ -51,8 +51,13 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
+  const updateUser = async (updatedUser) => {
+    await SecureStore.setItemAsync('user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

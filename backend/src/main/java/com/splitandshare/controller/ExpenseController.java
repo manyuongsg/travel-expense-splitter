@@ -38,6 +38,14 @@ public class ExpenseController {
             .body(expenseService.create(tripId, req, principal.getUsername()));
     }
 
+    @PutMapping("/{expenseId}")
+    public ResponseEntity<ExpenseResponse> update(@PathVariable String tripId,
+                                                   @PathVariable String expenseId,
+                                                   @Valid @RequestBody ExpenseRequest req,
+                                                   @AuthenticationPrincipal UserDetails principal) {
+        return ResponseEntity.ok(expenseService.update(tripId, expenseId, req, principal.getUsername()));
+    }
+
     @DeleteMapping("/{expenseId}")
     public ResponseEntity<Void> delete(@PathVariable String tripId,
                                         @PathVariable String expenseId,

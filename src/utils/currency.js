@@ -1,6 +1,8 @@
 // All monetary values are stored as integer cents (minor units) to avoid
 // floating-point errors. Only convert to/from display strings at the UI boundary.
 
+export const HOME_CURRENCY = 'SGD';
+
 export function centsToDollars(cents) {
   return cents / 100;
 }
@@ -11,7 +13,7 @@ export function dollarsToCents(dollarsStr) {
   return Math.round(parsed * 100);
 }
 
-export function formatCurrency(cents, currencyCode = 'USD') {
+export function formatCurrency(cents, currencyCode = 'SGD') {
   try {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -32,6 +34,6 @@ export function splitEqually(totalCents, numMembers) {
 }
 
 export const SUPPORTED_CURRENCIES = [
-  'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'SGD', 'HKD', 'MYR',
+  'SGD', 'USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'HKD', 'MYR',
   'THB', 'IDR', 'PHP', 'VND', 'KRW', 'CNY', 'INR', 'NZD', 'SEK', 'NOK',
 ];
