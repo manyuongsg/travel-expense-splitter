@@ -1,25 +1,21 @@
+/**
+ * A3 · New entry — ticket-stub form.
+ * Perforated container, serif amount, category glyphs, "Stamp & file" submit.
+ */
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, Pressable, StyleSheet,
   ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
 import { expenseService } from '../../services/expenseService';
 import { dbService } from '../../services/dbService';
 import { useAuth } from '../../context/AuthContext';
 import { dollarsToCents, formatCurrency, splitEqually, HOME_CURRENCY } from '../../utils/currency';
 import Toast from 'react-native-toast-message';
-import { C, F } from '../../theme/postage';
+import { C, F, CATS } from '../../theme/postage';
+import { MonoLabel, SerifHead, MemberAvatar } from '../../components/PostageElements';
 
-const CATEGORIES = [
-  { id: 'FOOD',          label: 'Food & Drink',   icon: 'restaurant' },
-  { id: 'TRANSPORT',     label: 'Transport',       icon: 'directions-car' },
-  { id: 'ACCOMMODATION', label: 'Stay',            icon: 'hotel' },
-  { id: 'ACTIVITIES',    label: 'Activities',      icon: 'local-activity' },
-  { id: 'SHOPPING',      label: 'Shopping',        icon: 'shopping-bag' },
-  { id: 'HEALTH',        label: 'Health',          icon: 'medical-services' },
-  { id: 'OTHER',         label: 'Other',           icon: 'more-horiz' },
-];
+const CATEGORY_KEYS = ['FOOD', 'TRANSPORT', 'ACCOMMODATION', 'ACTIVITIES', 'SHOPPING', 'HEALTH', 'OTHER'];
 
 export default function AddExpenseScreen({ route, navigation }) {
   const {
@@ -36,18 +32,17 @@ export default function AddExpenseScreen({ route, navigation }) {
   }, [members, user?.id]);
 
   const [description, setDescription] = useState('');
-  const [amountStr, setAmountStr] = useState('');
-  const [currency, setCurrency] = useState(tripCurrency);
-  const [category, setCategory] = useState('OTHER');
-  const [paidById, setPaidById] = useState(myMemberId);
-  const [splitType, setSplitType] = useState('EQUAL');
+  const [amountStr, setAmountStr]     = useState('');
+  const [currency, setCurrency]       = useState(tripCurrency);
+  const [category, setCategory]       = useState('FOOD');
+  const [paidById, setPaidById]       = useState(myMemberId);
+  const [splitType, setSplitType]     = useState('EQUAL');
   const [customAmounts, setCustomAmounts] = useState({});
-  const [exchangeRate, setExchangeRate] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [exchangeRate, setExchangeRate]   = useState(null);
+  const [loading, setLoading]         = useState(false);
   const [rateLoading, setRateLoading] = useState(false);
 
-  const showToggle = tripCurrency !== homeCurrency;
-  // The "other" currency — what we convert to for the hint
+  const showToggle   = tripCurrency !== homeCurrency;
   const otherCurrency = currency === tripCurrency ? homeCurrency : tripCurrency;
 
   useEffect(() => {
@@ -59,7 +54,6 @@ export default function AddExpenseScreen({ route, navigation }) {
         setExchangeRate(rates[otherCurrency] ?? 1.0);
       } catch {
         setExchangeRate(null);
-        Toast.show({ type: 'error', text1: 'Could not fetch exchange rate', position: 'bottom' });
       } finally {
         setRateLoading(false);
       }
@@ -67,7 +61,8 @@ export default function AddExpenseScreen({ route, navigation }) {
   }, [currency, tripCurrency, homeCurrency]);
 
   const totalCents = dollarsToCents(amountStr);
-  const getCustomTotal = () => Object.values(customAmounts).reduce((s, v) => s + dollarsToCents(v || '0'), 0);
+  const getCustomTotal = () =>
+    Object.values(customAmounts).reduce((s, v) => s + dollarsToCents(v || '0'), 0);
 
   const buildSplits = () => {
     if (splitType === 'EQUAL') {
@@ -82,10 +77,8 @@ export default function AddExpenseScreen({ route, navigation }) {
     if (totalCents <= 0) return 'Enter a valid amount';
     if (!paidById) return 'Select who paid';
     if (splitType === 'CUSTOM') {
-      const customTotal = getCustomTotal();
-      if (customTotal !== totalCents) {
-        return `Splits must equal ${formatCurrency(totalCents, currency)} (currently ${formatCurrency(customTotal, currency)})`;
-      }
+      const ct = getCustomTotal();
+      if (ct !== totalCents) return `Splits must equal ${formatCurrency(totalCents, currency)} (currently ${formatCurrency(ct, currency)})`;
     }
     return null;
   };
@@ -94,21 +87,16 @@ export default function AddExpenseScreen({ route, navigation }) {
     const error = validate();
     if (error) { Toast.show({ type: 'error', text1: error, position: 'bottom' }); return; }
     setLoading(true);
-    // payload exchangeRate converts expense currency → trip currency
-    const payloadExchangeRate = currency === tripCurrency ? 1.0 : (exchangeRate ?? 1.0);
+    const payloadRate = currency === tripCurrency ? 1.0 : (exchangeRate ?? 1.0);
     const payload = {
-      description: description.trim(),
-      amountCents: totalCents,
-      currency,
-      category,
-      paidByMemberId: paidById,
-      splitType,
+      description: description.trim(), amountCents: totalCents, currency,
+      category, paidByMemberId: paidById, splitType,
       customSplits: splitType === 'CUSTOM' ? buildSplits() : undefined,
-      exchangeRate: payloadExchangeRate,
+      exchangeRate: payloadRate,
     };
     try {
       await expenseService.create(tripId, payload);
-      Toast.show({ type: 'success', text1: 'Expense added!', position: 'bottom' });
+      Toast.show({ type: 'success', text1: 'Expense filed!', position: 'bottom' });
       navigation.goBack();
     } catch {
       const localId = `local_${Date.now()}`;
@@ -127,158 +115,183 @@ export default function AddExpenseScreen({ route, navigation }) {
     }
   };
 
+  const catMeta = CATS[category] ?? CATS.OTHER;
+
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
 
-        <Text style={styles.label}>DESCRIPTION</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. Dinner at La Maison"
-          placeholderTextColor={C.border}
-          value={description}
-          onChangeText={setDescription}
-        />
+        {/* Header */}
+        <View style={styles.headerRow}>
+          <MonoLabel size={9} tracking={2} color={C.inkLight}>← LEDGER</MonoLabel>
+          <MonoLabel size={9} tracking={2} color={C.inkLight}>DRAFT</MonoLabel>
+        </View>
+        <SerifHead size={32} italic weight="500" style={styles.heading}>New entry</SerifHead>
+        <MonoLabel size={9} style={styles.receiptNo}>
+          RECEIPT NO. — DRAFT
+        </MonoLabel>
 
-        <Text style={styles.label}>AMOUNT</Text>
-        <View style={styles.amountRow}>
+        {/* ── Ticket-stub container ── */}
+        <View style={styles.stub}>
+          {/* Top half: description + amount */}
+          <MonoLabel size={8} tracking={1.5}>DESCRIPTION</MonoLabel>
           <TextInput
-            style={[styles.input, { flex: 1 }]}
-            placeholder="0.00"
+            style={styles.descInput}
+            placeholder="e.g. Dinner at La Maison"
             placeholderTextColor={C.border}
-            keyboardType="decimal-pad"
-            value={amountStr}
-            onChangeText={setAmountStr}
+            value={description}
+            onChangeText={setDescription}
           />
-          {showToggle ? (
-            <View style={styles.currencyToggle}>
-              <Pressable
-                style={[styles.toggleBtn, currency === tripCurrency && styles.toggleBtnActive]}
-                onPress={() => setCurrency(tripCurrency)}
-              >
-                <Text style={[styles.toggleBtnCode, currency === tripCurrency && styles.toggleBtnCodeActive]}>
-                  {tripCurrency}
-                </Text>
-                <Text style={styles.toggleBtnLabel}>trip</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.toggleBtn, currency === homeCurrency && styles.toggleBtnActive]}
-                onPress={() => setCurrency(homeCurrency)}
-              >
-                <Text style={[styles.toggleBtnCode, currency === homeCurrency && styles.toggleBtnCodeActive]}>
-                  {homeCurrency}
-                </Text>
-                <Text style={styles.toggleBtnLabel}>home</Text>
-              </Pressable>
+
+          <View style={styles.amountRow}>
+            <View style={{ flex: 2 }}>
+              <MonoLabel size={8} tracking={1.5}>AMOUNT · {currency}</MonoLabel>
+              <SerifHead size={38} weight="600" style={styles.amountDisplay}>
+                {amountStr ? parseFloat(amountStr).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'}
+              </SerifHead>
+              <TextInput
+                style={styles.amountInput}
+                placeholder="0.00"
+                placeholderTextColor={C.border}
+                keyboardType="decimal-pad"
+                value={amountStr}
+                onChangeText={setAmountStr}
+              />
+              {showToggle && (
+                <MonoLabel size={8.5} color={C.stamp} tracking={1.2} style={{ marginTop: 2 }}>
+                  {rateLoading ? 'fetching rate...' : exchangeRate
+                    ? `≈ ${formatCurrency(Math.round(totalCents * exchangeRate), otherCurrency)} ${otherCurrency} · FX ${exchangeRate?.toFixed(2)}`
+                    : 'rate unavailable'}
+                </MonoLabel>
+              )}
             </View>
-          ) : (
-            <View style={styles.currencyTag}>
-              <Text style={styles.currencyTagText}>{currency}</Text>
+            {/* Currency pills */}
+            <View style={styles.currencyPills}>
+              {[tripCurrency, ...(showToggle ? [homeCurrency] : [])].map((c) => (
+                <Pressable
+                  key={c}
+                  onPress={() => setCurrency(c)}
+                  style={[styles.ccyPill, currency === c && styles.ccyPillActive]}
+                >
+                  <Text style={[styles.ccyPillText, currency === c && styles.ccyPillTextActive]}>{c}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+
+          {/* Perforation line */}
+          <View style={styles.perfLine}>
+            <View style={styles.perfCircleLeft} />
+            <View style={styles.perfDash} />
+            <View style={styles.perfCircleRight} />
+          </View>
+
+          {/* Bottom half: category, paid by, split */}
+          <MonoLabel size={8} tracking={1.5} style={{ marginTop: 14 }}>CATEGORY</MonoLabel>
+          <View style={styles.catGrid}>
+            {CATEGORY_KEYS.map((k) => {
+              const meta = CATS[k];
+              const active = category === k;
+              return (
+                <Pressable
+                  key={k}
+                  onPress={() => setCategory(k)}
+                  style={[styles.catChip, active && { backgroundColor: meta.tint, borderColor: meta.tint }]}
+                >
+                  <Text style={[styles.catGlyph, { color: active ? '#fff' : meta.tint }]}>{meta.glyph}</Text>
+                  <Text style={[styles.catLabel, active && { color: '#fff' }]}>{meta.label.toUpperCase()}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <MonoLabel size={8} tracking={1.5} style={styles.fieldLabel}>PAID BY</MonoLabel>
+          <View style={styles.memberRow}>
+            {members.map((m, i) => {
+              const active = m.id === paidById;
+              return (
+                <Pressable
+                  key={m.id}
+                  onPress={() => setPaidById(m.id)}
+                  style={[styles.memberChip, active && styles.memberChipActive]}
+                >
+                  <MemberAvatar
+                    initials={(m.name ?? m.displayName ?? '??').slice(0, 2).toUpperCase()}
+                    hue={[14, 200, 340, 130, 280, 40][i % 6]}
+                    size={20}
+                  />
+                  <Text style={[styles.memberName, active && { color: C.surface }]}>
+                    {(m.name ?? m.displayName ?? '??').toUpperCase()}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <MonoLabel size={8} tracking={1.5} style={styles.fieldLabel}>SPLIT</MonoLabel>
+          <View style={styles.splitRow}>
+            {['EQUAL', 'CUSTOM'].map((t) => (
+              <Pressable
+                key={t}
+                onPress={() => setSplitType(t)}
+                style={[styles.splitBtn, splitType === t && styles.splitBtnActive]}
+              >
+                <Text style={[styles.splitBtnText, splitType === t && { color: C.surface }]}>{t}</Text>
+              </Pressable>
+            ))}
+          </View>
+
+          {/* Split preview */}
+          {totalCents > 0 && members.length > 0 && (
+            <View style={styles.splitPreview}>
+              {splitType === 'EQUAL'
+                ? splitEqually(totalCents, members.length).map((cents, i) => (
+                  <View key={members[i]?.id ?? i} style={[styles.splitItem, i > 0 && styles.splitItemBorder]}>
+                    <SerifHead size={14} italic>{members[i]?.name ?? members[i]?.displayName ?? '—'}</SerifHead>
+                    <Text style={styles.splitAmt}>{formatCurrency(cents, currency)}</Text>
+                  </View>
+                ))
+                : members.map((m, i) => (
+                  <View key={m.id} style={[styles.splitItem, i > 0 && styles.splitItemBorder]}>
+                    <SerifHead size={14} italic>{m.name ?? m.displayName}</SerifHead>
+                    <TextInput
+                      style={styles.customInput}
+                      placeholder="0.00"
+                      placeholderTextColor={C.border}
+                      keyboardType="decimal-pad"
+                      value={customAmounts[m.id] ?? ''}
+                      onChangeText={(v) => setCustomAmounts((prev) => ({ ...prev, [m.id]: v }))}
+                    />
+                  </View>
+                ))
+              }
+              {splitType === 'CUSTOM' && totalCents > 0 && (
+                <MonoLabel
+                  size={9}
+                  color={getCustomTotal() !== totalCents ? C.stamp : C.positive}
+                  style={{ marginTop: 8 }}
+                >
+                  {formatCurrency(getCustomTotal(), currency)} / {formatCurrency(totalCents, currency)}
+                </MonoLabel>
+              )}
             </View>
           )}
         </View>
 
-        {showToggle && (
-          <Text style={styles.rateHint}>
-            {rateLoading
-              ? 'fetching rate...'
-              : exchangeRate
-              ? `≈ ${formatCurrency(Math.round(totalCents * exchangeRate), otherCurrency)} in ${otherCurrency}`
-              : 'exchange rate unavailable'}
-          </Text>
-        )}
-
-        <Text style={styles.label}>CATEGORY</Text>
-        <View style={styles.catGrid}>
-          {CATEGORIES.map((cat) => (
-            <Pressable
-              key={cat.id}
-              style={[styles.catChip, category === cat.id && styles.catChipActive]}
-              onPress={() => setCategory(cat.id)}
-            >
-              <MaterialIcons
-                name={cat.icon}
-                size={15}
-                color={category === cat.id ? '#fff' : C.inkMid}
-              />
-              <Text style={[styles.catChipText, category === cat.id && styles.catChipTextActive]}>
-                {cat.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <Text style={styles.label}>PAID BY</Text>
-        <View style={styles.chipRow}>
-          {members.map((m) => (
-            <Pressable
-              key={m.id}
-              style={[styles.chip, m.id === paidById && styles.chipActive]}
-              onPress={() => setPaidById(m.id)}
-            >
-              <Text style={[styles.chipText, m.id === paidById && styles.chipTextActive]}>{m.name}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <Text style={styles.label}>SPLIT</Text>
-        <View style={styles.splitToggle}>
-          {['EQUAL', 'CUSTOM'].map((type) => (
-            <Pressable
-              key={type}
-              style={[styles.splitBtn, splitType === type && styles.splitBtnActive]}
-              onPress={() => setSplitType(type)}
-            >
-              <Text style={[styles.splitBtnText, splitType === type && styles.splitBtnTextActive]}>
-                {type}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {splitType === 'EQUAL' && totalCents > 0 && members.length > 0 && (
-          <View style={styles.splitPreview}>
-            {splitEqually(totalCents, members.length).map((cents, i) => (
-              <View key={members[i]?.id ?? i} style={[styles.splitRow, i > 0 && styles.splitRowBorder]}>
-                <Text style={styles.splitName}>{members[i]?.name}</Text>
-                <Text style={styles.splitAmt}>{formatCurrency(cents, currency)}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {splitType === 'CUSTOM' && (
-          <View style={styles.splitPreview}>
-            {members.map((m, i) => (
-              <View key={m.id} style={[styles.splitRow, i > 0 && styles.splitRowBorder]}>
-                <Text style={styles.splitName}>{m.name}</Text>
-                <TextInput
-                  style={styles.customInput}
-                  placeholder="0.00"
-                  placeholderTextColor={C.border}
-                  keyboardType="decimal-pad"
-                  value={customAmounts[m.id] ?? ''}
-                  onChangeText={(v) => setCustomAmounts((prev) => ({ ...prev, [m.id]: v }))}
-                />
-              </View>
-            ))}
-            {totalCents > 0 && (
-              <Text style={[styles.rateHint, getCustomTotal() !== totalCents && { color: C.negative }]}>
-                total: {formatCurrency(getCustomTotal(), currency)} / {formatCurrency(totalCents, currency)}
-              </Text>
-            )}
-          </View>
-        )}
-
+        {/* Stamp & file submit */}
         <Pressable
-          style={[styles.primaryBtn, loading && styles.disabledBtn]}
+          style={[styles.submitBtn, loading && styles.disabledBtn]}
           onPress={handleAdd}
           disabled={loading}
         >
-          {loading
-            ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.primaryBtnText}>ADD EXPENSE</Text>
-          }
+          {loading ? (
+            <ActivityIndicator color={C.bg} />
+          ) : (
+            <>
+              <SerifHead size={18} italic color={C.bg}>Stamp &amp; file</SerifHead>
+              <MonoLabel size={11} color={C.bg} tracking={1.5}>FILE →</MonoLabel>
+            </>
+          )}
         </Pressable>
 
       </ScrollView>
@@ -288,77 +301,108 @@ export default function AddExpenseScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: C.bg },
-  container: { padding: 20, paddingBottom: 40 },
+  container: { padding: 22, paddingBottom: 48 },
 
-  label: { fontFamily: F.mono, fontSize: 10, color: C.inkLight, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8, marginTop: 22 },
-  input: {
-    borderBottomWidth: 1.5, borderBottomColor: C.border,
-    paddingVertical: 10, fontSize: 16, color: C.ink, backgroundColor: 'transparent', marginBottom: 2,
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  heading:   { marginBottom: 2 },
+  receiptNo: { marginBottom: 16, color: C.inkLight },
+
+  stub: {
+    backgroundColor: C.ticketStub,
+    borderWidth: 1, borderColor: `${C.ink}40`,
+    padding: 16, paddingBottom: 18,
+    marginBottom: 16,
   },
 
-  amountRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
-
-  currencyTag: {
-    paddingHorizontal: 14, paddingVertical: 10, backgroundColor: C.stamp, borderRadius: 3,
+  descInput: {
+    borderBottomWidth: 1, borderBottomColor: `${C.ink}55`,
+    fontFamily: F.serif, fontSize: 22, fontStyle: 'italic',
+    paddingVertical: 6, color: C.ink, backgroundColor: 'transparent',
+    marginBottom: 14,
   },
-  currencyTagText: { fontFamily: F.mono, color: '#fff', fontWeight: '700', fontSize: 13 },
 
-  currencyToggle: {
-    flexDirection: 'row', borderWidth: 1, borderColor: C.border, borderRadius: 3, overflow: 'hidden',
+  amountRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  amountDisplay: { lineHeight: 42, marginTop: 2 },
+  amountInput: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    opacity: 0, height: 40,
+    fontFamily: F.mono, fontSize: 22, color: C.ink,
   },
-  toggleBtn: {
-    paddingHorizontal: 10, paddingVertical: 6, alignItems: 'center',
-    backgroundColor: C.surface, minWidth: 52,
+
+  currencyPills: { flexDirection: 'column', gap: 6, paddingTop: 20 },
+  ccyPill: {
+    paddingHorizontal: 10, paddingVertical: 5,
+    borderWidth: 1, borderColor: `${C.ink}80`,
   },
-  toggleBtnActive: { backgroundColor: C.stamp },
-  toggleBtnCode: { fontFamily: F.mono, fontSize: 11, color: C.inkMid, fontWeight: '700' },
-  toggleBtnCodeActive: { color: '#fff' },
-  toggleBtnLabel: { fontFamily: F.mono, fontSize: 8, color: C.inkLight, letterSpacing: 0.5, marginTop: 1 },
+  ccyPillActive: { backgroundColor: C.ink, borderColor: C.ink },
+  ccyPillText: { fontFamily: F.mono, fontSize: 10, letterSpacing: 1.2, color: C.ink },
+  ccyPillTextActive: { color: C.bg },
 
-  rateHint: { fontFamily: F.mono, fontSize: 11, color: C.inkLight, marginTop: 6, letterSpacing: 0.4 },
+  perfLine: {
+    flexDirection: 'row', alignItems: 'center',
+    marginHorizontal: -16, marginTop: 20, marginBottom: 0,
+  },
+  perfCircleLeft: {
+    width: 16, height: 16, borderRadius: 8,
+    backgroundColor: C.bg, borderWidth: 1, borderColor: `${C.ink}40`,
+    marginLeft: -8,
+  },
+  perfCircleRight: {
+    width: 16, height: 16, borderRadius: 8,
+    backgroundColor: C.bg, borderWidth: 1, borderColor: `${C.ink}40`,
+    marginRight: -8,
+  },
+  perfDash: {
+    flex: 1, height: 1,
+    borderTopWidth: 1, borderTopColor: `${C.ink}50`,
+  },
 
-  catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  fieldLabel: { marginTop: 14, marginBottom: 8 },
+
+  catGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   catChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 8, paddingVertical: 5,
+    borderWidth: 1, borderColor: `${C.ink}40`,
+  },
+  catGlyph: { fontFamily: F.serif, fontSize: 13, fontWeight: '600' },
+  catLabel: { fontFamily: F.mono, fontSize: 9, letterSpacing: 1, color: C.ink },
+
+  memberRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  memberChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 8,
-    borderWidth: 1, borderColor: C.border, borderRadius: 2, backgroundColor: C.surface,
+    paddingHorizontal: 8, paddingVertical: 5,
+    borderWidth: 1, borderColor: `${C.ink}50`,
   },
-  catChipActive: { backgroundColor: C.stamp, borderColor: C.stamp },
-  catChipText: { fontFamily: F.mono, fontSize: 11, color: C.inkMid, letterSpacing: 0.3 },
-  catChipTextActive: { color: '#fff', fontWeight: '700' },
+  memberChipActive: { backgroundColor: C.ink },
+  memberName: { fontFamily: F.mono, fontSize: 9, letterSpacing: 1, color: C.ink },
 
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: {
-    paddingHorizontal: 14, paddingVertical: 8,
-    borderWidth: 1, borderColor: C.border, borderRadius: 2, backgroundColor: C.surface,
+  splitRow: { flexDirection: 'row', gap: 6 },
+  splitBtn: {
+    flex: 1, paddingVertical: 8, alignItems: 'center',
+    borderWidth: 1, borderColor: `${C.ink}50`,
   },
-  chipActive: { backgroundColor: C.stamp, borderColor: C.stamp },
-  chipText: { fontFamily: F.mono, fontSize: 12, color: C.inkMid },
-  chipTextActive: { color: '#fff', fontWeight: '700' },
-
-  splitToggle: { flexDirection: 'row', borderWidth: 1, borderColor: C.border, borderRadius: 3, overflow: 'hidden' },
-  splitBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: C.surface },
-  splitBtnActive: { backgroundColor: C.stamp },
-  splitBtnText: { fontFamily: F.mono, fontSize: 11, color: C.inkMid, letterSpacing: 1 },
-  splitBtnTextActive: { color: '#fff', fontWeight: '700' },
+  splitBtnActive: { backgroundColor: C.ink },
+  splitBtnText: { fontFamily: F.mono, fontSize: 10, letterSpacing: 1, color: C.ink },
 
   splitPreview: {
-    backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: 4, padding: 12, marginTop: 10,
+    marginTop: 12, paddingTop: 10,
+    borderTopWidth: 1, borderTopColor: `${C.ink}40`,
+    borderBottomWidth: 1, borderBottomColor: `${C.ink}40`,
+    paddingBottom: 10,
   },
-  splitRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
-  splitRowBorder: { borderTopWidth: 1, borderTopColor: C.divider },
-  splitName: { fontFamily: F.serif, fontSize: 14, fontStyle: 'italic', color: C.ink },
-  splitAmt: { fontFamily: F.mono, fontSize: 13, color: C.stamp, fontWeight: '700' },
+  splitItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 5 },
+  splitItemBorder: { borderTopWidth: 1, borderTopColor: `${C.ink}20` },
+  splitAmt: { fontFamily: F.mono, fontSize: 12, color: C.ink },
   customInput: {
     borderBottomWidth: 1, borderBottomColor: C.border,
     fontFamily: F.mono, fontSize: 14, color: C.ink,
     width: 90, textAlign: 'right', paddingVertical: 4,
   },
 
-  primaryBtn: {
-    backgroundColor: C.stamp, borderRadius: 3, paddingVertical: 16,
-    alignItems: 'center', marginTop: 36,
+  submitBtn: {
+    backgroundColor: C.ink, padding: 16,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
   },
   disabledBtn: { opacity: 0.6 },
-  primaryBtnText: { fontFamily: F.mono, color: '#fff', fontSize: 13, letterSpacing: 2, fontWeight: '700' },
 });

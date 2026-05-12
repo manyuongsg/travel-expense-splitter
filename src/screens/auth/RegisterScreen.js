@@ -1,11 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, TextInput, Pressable, StyleSheet,
-  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, SafeAreaView,
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { C, F } from '../../theme/postage';
+import { StampBorder, Postmark } from '../../components/PostageElements';
+
+function getStrength(pw) {
+  if (!pw) return { ratio: 0, label: '' };
+  let score = 0;
+  if (pw.length >= 8)  score += 0.3;
+  if (pw.length >= 12) score += 0.2;
+  if (/[A-Z]/.test(pw)) score += 0.2;
+  if (/[0-9]/.test(pw)) score += 0.15;
+  if (/[^a-zA-Z0-9]/.test(pw)) score += 0.15;
+  const ratio = Math.min(score, 1);
+  const label = ratio < 0.4 ? 'WEAK' : ratio < 0.65 ? 'FAIR' : ratio < 0.85 ? 'GOOD' : 'STRONG';
+  return { ratio, label };
+}
 
 export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
@@ -13,15 +26,18 @@ export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [countdown, setCountdown] = useState(3);
 
+  const strength = getStrength(password);
+
   useEffect(() => {
     if (!success) return;
     if (countdown === 0) { navigation.replace('Login'); return; }
-    const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
     return () => clearTimeout(timer);
   }, [success, countdown, navigation]);
 
@@ -30,24 +46,23 @@ export default function RegisterScreen({ navigation }) {
     if (!email.trim() || !/\S+@\S+\.\S+/.test(email)) return 'Enter a valid email';
     if (password.length < 8) return 'Password must be at least 8 characters';
     if (password !== confirm) return 'Passwords do not match';
+    if (!agreedToTerms) return 'Please agree to the terms to continue';
     return null;
   };
 
   const handleRegister = async () => {
-    const validationError = validate();
-    if (validationError) { setError(validationError); return; }
+    const err = validate();
+    if (err) { setError(err); return; }
     setError('');
     setLoading(true);
     try {
       await register(email.trim().toLowerCase(), password, displayName.trim());
       setSuccess(true);
     } catch (e) {
-      const serverMsg = e.response?.data?.message;
-      const isNetwork = !e.response && e.message;
       setError(
-        serverMsg
-          ?? (isNetwork ? 'Cannot reach server. Make sure the backend is running.' : null)
-          ?? 'Registration failed. Please try again.'
+        e.response?.data?.message
+        ?? (!e.response && e.message ? 'Cannot reach server. Make sure the backend is running.' : null)
+        ?? 'Registration failed. Please try again.'
       );
     } finally {
       setLoading(false);
@@ -56,119 +71,219 @@ export default function RegisterScreen({ navigation }) {
 
   if (success) {
     return (
-      <View style={styles.successContainer}>
-        <View style={styles.successStamp}>
-          <MaterialIcons name="check" size={40} color={C.stamp} />
+      <SafeAreaView style={styles.flex}>
+        <View style={styles.successContainer}>
+          <StampBorder width={90} height={110} color={C.stamp} label="ISSUED">
+            <Text style={styles.successV}>V</Text>
+          </StampBorder>
+          <Postmark city="MEMBER" date="2026" size={56} color={C.stamp} tilt={-10} />
+          <Text style={styles.successTitle}>Bon voyage</Text>
+          <Text style={styles.successBody}>Welcome aboard, {displayName.trim()}.</Text>
+          <Text style={styles.successMono}>REDIRECTING IN {countdown}s</Text>
+          <TouchableOpacity style={styles.signInBtn} onPress={() => navigation.replace('Login')} activeOpacity={0.85}>
+            <Text style={styles.signInBtnLabel}>Sign in now</Text>
+            <Text style={styles.signInBtnMono}>DEPART →</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={styles.successTitle}>Bon Voyage!</Text>
-        <Text style={styles.successBody}>Welcome aboard, {displayName.trim()}.</Text>
-        <Text style={styles.successMono}>Redirecting in {countdown}s</Text>
-        <Pressable style={styles.signInBtn} onPress={() => navigation.replace('Login')}>
-          <Text style={styles.signInBtnText}>SIGN IN NOW</Text>
-        </Pressable>
-      </View>
+      </SafeAreaView>
     );
   }
 
+  const fields = [
+    { label: 'FULL NAME',        placeholder: 'Jane Doe',          value: displayName, set: setDisplayName, opts: {} },
+    { label: 'EMAIL',            placeholder: 'you@example.com',   value: email,       set: setEmail,       opts: { keyboardType: 'email-address', autoCapitalize: 'none' } },
+    { label: 'PASSWORD',         placeholder: 'Min. 8 characters', value: password,    set: setPassword,    opts: { secureTextEntry: true }, meter: true },
+    { label: 'CONFIRM PASSWORD', placeholder: 'Repeat password',   value: confirm,     set: setConfirm,     opts: { secureTextEntry: true } },
+  ];
+
   return (
-    <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <SafeAreaView style={styles.flex}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
 
-        <View style={styles.logoArea}>
-          <Text style={styles.logoTitle}>Voyage</Text>
-          <Text style={styles.logoMono}>create your account</Text>
-        </View>
+          {/* Top nav */}
+          <View style={styles.topNav}>
+            <TouchableOpacity onPress={() => navigation.goBack()}>
+              <Text style={styles.topNavBack}>← SIGN IN</Text>
+            </TouchableOpacity>
+            <Text style={styles.topNavRight}>VOYAGE · ED.III</Text>
+          </View>
 
-        <View style={styles.stampCard}>
-          <Text style={styles.cardHeading}>New Traveller</Text>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerMono}>NEW TRAVELLER · ISSUE PASSPORT</Text>
+            <Text style={styles.headerTitle}>Open an account</Text>
+          </View>
 
-          {[
-            { label: 'FULL NAME', placeholder: 'Jane Doe', value: displayName, set: setDisplayName, opts: {} },
-            { label: 'EMAIL', placeholder: 'you@example.com', value: email, set: setEmail, opts: { keyboardType: 'email-address', autoCapitalize: 'none' } },
-            { label: 'PASSWORD', placeholder: 'Min. 8 characters', value: password, set: setPassword, opts: { secureTextEntry: true } },
-            { label: 'CONFIRM PASSWORD', placeholder: 'Repeat password', value: confirm, set: setConfirm, opts: { secureTextEntry: true } },
-          ].map(({ label, placeholder, value, set, opts }) => (
-            <View key={label}>
-              <Text style={styles.label}>{label}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder={placeholder}
-                placeholderTextColor={C.border}
-                value={value}
-                onChangeText={(t) => { set(t); setError(''); }}
-                autoCorrect={false}
-                {...opts}
-              />
-            </View>
-          ))}
+          {/* V stamp — top right */}
+          <View style={styles.vStampPos}>
+            <StampBorder width={56} height={70} color={C.stamp} label="NEW" tilt={6}>
+              <Text style={styles.vGlyph}>V</Text>
+            </StampBorder>
+          </View>
 
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          {/* Form card */}
+          <View style={styles.stampCard}>
+            <Text style={styles.cardHeading}>Passport details</Text>
+            <Text style={styles.cardSubMono}>FILL OUT BELOW · ALL FIELDS REQUIRED</Text>
 
-          <View style={styles.perf} />
+            {fields.map((f, i) => (
+              <View key={f.label}>
+                <Text style={[styles.label, { marginTop: i === 0 ? 12 : 10 }]}>{f.label}</Text>
+                <TextInput
+                  style={[styles.input, f.meter && styles.inputMono]}
+                  placeholder={f.placeholder}
+                  placeholderTextColor={C.border}
+                  value={f.value}
+                  onChangeText={t => { f.set(t); setError(''); }}
+                  autoCorrect={false}
+                  {...f.opts}
+                />
+                {f.meter && password.length > 0 && (
+                  <View style={styles.meterRow}>
+                    <View style={styles.meterTrack}>
+                      <View style={[styles.meterBar, { width: `${Math.round(strength.ratio * 100)}%` }]} />
+                    </View>
+                    <Text style={styles.meterLabel}>{strength.label}</Text>
+                  </View>
+                )}
+              </View>
+            ))}
 
-          <Pressable
-            style={[styles.primaryBtn, loading && styles.disabledBtn]}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading
-              ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.primaryBtnText}>CREATE ACCOUNT</Text>
-            }
-          </Pressable>
-        </View>
+            {/* Terms */}
+            <TouchableOpacity onPress={() => setAgreedToTerms(v => !v)} style={styles.termsRow} activeOpacity={0.7}>
+              <View style={[styles.checkbox, agreedToTerms && styles.checkboxOn]}>
+                {agreedToTerms && <Text style={styles.checkMark}>✓</Text>}
+              </View>
+              <Text style={styles.termsText}>
+                I agree to the <Text style={styles.termsLink}>terms</Text> and{' '}
+                <Text style={styles.termsLink}>privacy policy</Text>. My ledger is mine alone.
+              </Text>
+            </TouchableOpacity>
 
-        <Pressable onPress={() => navigation.goBack()}>
-          <Text style={styles.link}>Already travelling?{'  '}<Text style={styles.linkBold}>Sign In →</Text></Text>
-        </Pressable>
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      </ScrollView>
-    </KeyboardAvoidingView>
+            <View style={styles.perf} />
+
+            <TouchableOpacity
+              style={[styles.primaryBtn, loading && styles.disabledBtn]}
+              onPress={handleRegister}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+              {loading ? (
+                <ActivityIndicator color={C.bg} />
+              ) : (
+                <>
+                  <Text style={styles.primaryBtnLabel}>Bon voyage</Text>
+                  <Text style={styles.primaryBtnMono}>ISSUE →</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          {/* Sign in link */}
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.footerRow}>
+            <Text style={styles.footerText}>Already travelling?{'  '}</Text>
+            <Text style={styles.footerLink}>Sign in →</Text>
+          </TouchableOpacity>
+
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: C.bg },
-  container: { flexGrow: 1, justifyContent: 'center', padding: 28 },
+  container: { flexGrow: 1, paddingHorizontal: 22, paddingBottom: 32 },
 
-  logoArea: { alignItems: 'center', marginBottom: 28 },
-  logoTitle: { fontFamily: F.serif, fontSize: 44, fontStyle: 'italic', color: C.ink },
-  logoMono: { fontFamily: F.mono, fontSize: 10, color: C.inkLight, letterSpacing: 2.5, marginTop: 6, textTransform: 'uppercase' },
+  topNav: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingTop: 10,
+  },
+  topNavBack: { fontFamily: F.mono, fontSize: 11, letterSpacing: 1, color: C.inkLight },
+  topNavRight: { fontFamily: F.mono, fontSize: 11, letterSpacing: 1, color: C.inkLight },
+
+  header: { paddingTop: 24 },
+  headerMono: { fontFamily: F.mono, fontSize: 9, letterSpacing: 2.2, color: C.inkLight, textTransform: 'uppercase' },
+  headerTitle: {
+    fontFamily: F.serif, fontSize: 40, fontStyle: 'italic', fontWeight: '500',
+    letterSpacing: -0.8, lineHeight: 44, color: C.ink, marginTop: 6,
+  },
+
+  vStampPos: { position: 'absolute', top: 60, right: 22 },
+  vGlyph: {
+    fontFamily: F.serif, fontSize: 20, fontStyle: 'italic', fontWeight: '600', color: C.stamp,
+  },
 
   stampCard: {
-    backgroundColor: C.surface, borderWidth: 1.5, borderColor: C.border, borderRadius: 4, padding: 24,
+    backgroundColor: C.ticketStub,
+    borderWidth: 1.5, borderColor: `${C.ink}55`,
+    padding: 18, marginTop: 18,
   },
-  cardHeading: { fontFamily: F.serif, fontSize: 22, fontStyle: 'italic', color: C.ink, marginBottom: 18 },
+  cardHeading: { fontFamily: F.serif, fontSize: 20, fontStyle: 'italic', fontWeight: '500', color: C.ink },
+  cardSubMono: { fontFamily: F.mono, fontSize: 8, letterSpacing: 1.5, color: C.inkLight, marginTop: 2 },
 
-  label: { fontFamily: F.mono, fontSize: 10, color: C.inkLight, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 6, marginTop: 4 },
+  label: { fontFamily: F.mono, fontSize: 8, letterSpacing: 1.5, color: C.inkLight, marginBottom: 2 },
   input: {
-    borderBottomWidth: 1.5, borderBottomColor: C.border,
-    paddingVertical: 9, fontSize: 16, color: C.ink, marginBottom: 14, backgroundColor: 'transparent',
+    fontFamily: F.serif, fontSize: 16, color: C.ink,
+    borderBottomWidth: 1, borderBottomColor: `${C.ink}55`,
+    paddingVertical: 4, paddingBottom: 6,
+    backgroundColor: 'transparent',
   },
+  inputMono: { fontFamily: F.mono, letterSpacing: 2 },
 
-  perf: { borderTopWidth: 1, borderTopColor: C.divider, marginVertical: 14 },
+  meterRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4, marginBottom: 2 },
+  meterTrack: { flex: 1, height: 2, backgroundColor: `${C.ink}20` },
+  meterBar: { height: '100%', backgroundColor: C.ochre },
+  meterLabel: { fontFamily: F.mono, fontSize: 7.5, letterSpacing: 1.2, color: C.inkLight },
+
+  termsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 14 },
+  checkbox: {
+    width: 12, height: 12, marginTop: 2, borderWidth: 1.2, borderColor: C.ink,
+    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  },
+  checkboxOn: { backgroundColor: C.ink },
+  checkMark: { color: C.bg, fontSize: 9, lineHeight: 12 },
+  termsText: { flex: 1, fontFamily: F.serif, fontSize: 12, lineHeight: 17, color: C.ink, opacity: 0.8 },
+  termsLink: { color: C.stamp, fontWeight: '600' },
 
   errorText: {
     fontFamily: F.mono, fontSize: 11, color: C.negative,
-    marginBottom: 8, paddingHorizontal: 10, paddingVertical: 8,
-    backgroundColor: C.negativeBg, borderRadius: 2,
+    marginTop: 8, paddingHorizontal: 10, paddingVertical: 8,
+    backgroundColor: C.negativeBg,
   },
 
-  primaryBtn: { backgroundColor: C.stamp, borderRadius: 3, paddingVertical: 14, alignItems: 'center' },
+  perf: {
+    borderTopWidth: 1, borderTopColor: `${C.ink}55`,
+    borderStyle: 'dashed', marginTop: 14, marginBottom: 14,
+  },
+
+  primaryBtn: {
+    backgroundColor: C.stamp, paddingVertical: 13, paddingHorizontal: 14,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+  },
   disabledBtn: { opacity: 0.6 },
-  primaryBtnText: { fontFamily: F.mono, color: '#fff', fontSize: 13, letterSpacing: 2, fontWeight: '700' },
+  primaryBtnLabel: { fontFamily: F.serif, fontSize: 18, fontStyle: 'italic', color: C.bg },
+  primaryBtnMono: { fontFamily: F.mono, fontSize: 10, letterSpacing: 1.8, color: C.bg },
 
-  link: { textAlign: 'center', color: C.inkMid, marginTop: 28, fontSize: 14 },
-  linkBold: { color: C.stamp, fontWeight: '700' },
+  footerRow: { flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', marginTop: 20 },
+  footerText: { fontFamily: F.serif, fontSize: 14, color: C.inkMid },
+  footerLink: { fontFamily: F.serif, fontSize: 14, fontStyle: 'italic', fontWeight: '600', color: C.stamp },
 
-  successContainer: { flex: 1, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center', padding: 32 },
-  successStamp: {
-    width: 96, height: 96, borderWidth: 3, borderColor: C.stamp, borderRadius: 48,
-    justifyContent: 'center', alignItems: 'center', marginBottom: 24,
+  successContainer: {
+    flex: 1, backgroundColor: C.bg,
+    justifyContent: 'center', alignItems: 'center', padding: 32, gap: 12,
   },
-  successTitle: { fontFamily: F.serif, fontSize: 32, fontStyle: 'italic', color: C.ink, marginBottom: 10 },
-  successBody: { fontSize: 16, color: C.inkMid, textAlign: 'center', marginBottom: 6 },
-  successMono: { fontFamily: F.mono, fontSize: 11, color: C.inkLight, letterSpacing: 1.5, marginBottom: 36 },
-  signInBtn: { backgroundColor: C.stamp, borderRadius: 3, paddingVertical: 13, paddingHorizontal: 40 },
-  signInBtnText: { fontFamily: F.mono, color: '#fff', fontSize: 13, letterSpacing: 2, fontWeight: '700' },
+  successV: { fontFamily: F.serif, fontSize: 36, fontStyle: 'italic', fontWeight: '600', color: C.stamp },
+  successTitle: { fontFamily: F.serif, fontSize: 32, fontStyle: 'italic', color: C.ink },
+  successBody: { fontFamily: F.serif, fontSize: 16, color: C.inkMid, textAlign: 'center' },
+  successMono: { fontFamily: F.mono, fontSize: 11, color: C.inkLight, letterSpacing: 1.5 },
+  signInBtn: {
+    backgroundColor: C.stamp, paddingVertical: 13, paddingHorizontal: 32, marginTop: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 16,
+  },
+  signInBtnLabel: { fontFamily: F.serif, fontSize: 18, fontStyle: 'italic', color: C.bg },
+  signInBtnMono: { fontFamily: F.mono, fontSize: 10, letterSpacing: 1.8, color: C.bg },
 });

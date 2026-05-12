@@ -40,6 +40,10 @@ public class Expense {
     @Column(nullable = false)
     private SplitType splitType;
 
+    @Enumerated(EnumType.STRING)
+    @Column
+    private Category category = Category.OTHER;
+
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ExpenseSplit> splits = new ArrayList<>();
 
@@ -50,6 +54,10 @@ public class Expense {
 
     public enum SplitType {
         EQUAL, CUSTOM
+    }
+
+    public enum Category {
+        FOOD, TRANSPORT, ACCOMMODATION, ACTIVITIES, SHOPPING, HEALTH, OTHER
     }
 
     public String getId() { return id; }
@@ -68,6 +76,8 @@ public class Expense {
     public void setExchangeRate(BigDecimal exchangeRate) { this.exchangeRate = exchangeRate; }
     public SplitType getSplitType() { return splitType; }
     public void setSplitType(SplitType splitType) { this.splitType = splitType; }
+    public Category getCategory() { return category; }
+    public void setCategory(Category category) { this.category = category; }
     public List<ExpenseSplit> getSplits() { return splits; }
     public void setSplits(List<ExpenseSplit> splits) { this.splits = splits; }
     public LocalDateTime getCreatedAt() { return createdAt; }
@@ -83,6 +93,7 @@ public class Expense {
         private String currency;
         private BigDecimal exchangeRate;
         private SplitType splitType;
+        private Category category = Category.OTHER;
 
         public Builder trip(Trip trip) { this.trip = trip; return this; }
         public Builder paidBy(TripMember paidBy) { this.paidBy = paidBy; return this; }
@@ -91,6 +102,7 @@ public class Expense {
         public Builder currency(String currency) { this.currency = currency; return this; }
         public Builder exchangeRate(BigDecimal exchangeRate) { this.exchangeRate = exchangeRate; return this; }
         public Builder splitType(SplitType splitType) { this.splitType = splitType; return this; }
+        public Builder category(Category category) { this.category = category; return this; }
 
         public Expense build() {
             Expense e = new Expense();
@@ -101,6 +113,7 @@ public class Expense {
             e.currency = currency;
             e.exchangeRate = exchangeRate;
             e.splitType = splitType;
+            e.category = category;
             e.splits = new ArrayList<>();
             return e;
         }

@@ -11,19 +11,21 @@ public class ExpenseResponse {
     private String currency;
     private BigDecimal exchangeRate;
     private String splitType;
+    private String category;
     private LocalDateTime createdAt;
     private PaidByDto paidBy;
     private List<SplitDto> splits;
 
     public ExpenseResponse(String id, String description, Long amountCents, String currency,
-                           BigDecimal exchangeRate, String splitType, LocalDateTime createdAt,
-                           PaidByDto paidBy, List<SplitDto> splits) {
+                           BigDecimal exchangeRate, String splitType, String category,
+                           LocalDateTime createdAt, PaidByDto paidBy, List<SplitDto> splits) {
         this.id = id;
         this.description = description;
         this.amountCents = amountCents;
         this.currency = currency;
         this.exchangeRate = exchangeRate;
         this.splitType = splitType;
+        this.category = category;
         this.createdAt = createdAt;
         this.paidBy = paidBy;
         this.splits = splits;
@@ -41,6 +43,8 @@ public class ExpenseResponse {
     public void setExchangeRate(BigDecimal exchangeRate) { this.exchangeRate = exchangeRate; }
     public String getSplitType() { return splitType; }
     public void setSplitType(String splitType) { this.splitType = splitType; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public PaidByDto getPaidBy() { return paidBy; }

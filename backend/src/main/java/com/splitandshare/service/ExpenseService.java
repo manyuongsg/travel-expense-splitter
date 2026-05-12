@@ -50,6 +50,8 @@ public class ExpenseService {
 
         BigDecimal exchangeRate = req.getExchangeRate() != null ? req.getExchangeRate() : BigDecimal.ONE;
 
+        Expense.Category category = parseCategory(req.getCategory());
+
         Expense expense = Expense.builder()
             .trip(trip)
             .paidBy(paidBy)
@@ -58,6 +60,7 @@ public class ExpenseService {
             .currency(req.getCurrency().toUpperCase())
             .exchangeRate(exchangeRate)
             .splitType(Expense.SplitType.valueOf(req.getSplitType()))
+            .category(category)
             .build();
 
         List<ExpenseSplit> splits = buildSplits(expense, req, trip);
@@ -87,8 +90,10 @@ public class ExpenseService {
         expense.setExchangeRate(exchangeRate);
         expense.setPaidBy(paidBy);
         expense.setSplitType(Expense.SplitType.valueOf(req.getSplitType()));
+        expense.setCategory(parseCategory(req.getCategory()));
 
         expense.getSplits().clear();
+        expenseRepository.saveAndFlush(expense);
         expense.getSplits().addAll(buildSplits(expense, req, trip));
 
         return toResponse(expenseRepository.save(expense));
@@ -148,6 +153,12 @@ public class ExpenseService {
             .orElseThrow(() -> new NoSuchElementException("Trip not found: " + tripId));
     }
 
+    private Expense.Category parseCategory(String raw) {
+        if (raw == null) return Expense.Category.OTHER;
+        try { return Expense.Category.valueOf(raw.toUpperCase()); }
+        catch (IllegalArgumentException e) { return Expense.Category.OTHER; }
+    }
+
     private void assertCreator(Trip trip, String userId) {
         if (!trip.getCreatedBy().getId().equals(userId)) {
             throw new AccessDeniedException("Only the trip creator can access this trip");
@@ -163,6 +174,7 @@ public class ExpenseService {
                 s.getShareAmountCents().longValue(),
                 s.isSettled()))
             .toList();
+        String categoryName = expense.getCategory() != null ? expense.getCategory().name() : Expense.Category.OTHER.name();
         return new ExpenseResponse(
             expense.getId(),
             expense.getDescription(),
@@ -170,6 +182,7 @@ public class ExpenseService {
             expense.getCurrency(),
             expense.getExchangeRate(),
             expense.getSplitType().name(),
+            categoryName,
             expense.getCreatedAt(),
             new ExpenseResponse.PaidByDto(expense.getPaidBy().getId(), expense.getPaidBy().getName()),
             splitDtos
