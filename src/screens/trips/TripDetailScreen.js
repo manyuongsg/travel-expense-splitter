@@ -13,6 +13,7 @@ import { tripService } from '../../services/tripService';
 import { expenseService } from '../../services/expenseService';
 import { dbService } from '../../services/dbService';
 import { formatCurrency, HOME_CURRENCY } from '../../utils/currency';
+import { toTimestamp } from '../../utils/dateUtils';
 import { useAuth } from '../../context/AuthContext';
 import Toast from 'react-native-toast-message';
 import { C, F, CATS } from '../../theme/postage';
@@ -86,23 +87,25 @@ export default function TripDetailScreen({ route, navigation }) {
         }
       }
 
-      await dbService.saveTrip({ id: trip.id, name: trip.name, baseCurrency: trip.baseCurrency, homeCurrency: hc, createdAt: new Date(trip.createdAt).getTime() });
+      await dbService.saveTrip({ id: trip.id, name: trip.name, baseCurrency: trip.baseCurrency, homeCurrency: hc, createdAt: toTimestamp(trip.createdAt) });
       await dbService.saveTripMembers(tripId, trip.members ?? []);
       for (const exp of serverExpenses) {
         await dbService.saveExpense({
           id: exp.id, tripId, description: exp.description,
           amountCents: exp.amountCents, currency: exp.currency,
           exchangeRate: exp.exchangeRate, paidByMemberId: exp.paidBy?.id,
-          createdAt: new Date(exp.createdAt).getTime(),
+          createdAt: toTimestamp(exp.createdAt),
           splits: exp.splits?.map((s) => ({ id: s.id, memberId: s.owedById, amountCents: s.shareAmountCents, settled: s.settled })),
         });
       }
-    } catch {
+    } catch (e) {
+      console.error('[TripDetail] fetchData failed:', e?.message ?? e, e?.response?.data);
       const local = await dbService.getExpensesForTrip(tripId);
       const localMembers = await dbService.getTripMembers(tripId);
       setExpenses(local);
       setMembers(localMembers.map((m) => ({ id: m.member_id, name: m.name })));
-      Toast.show({ type: 'info', text1: 'Showing offline data', position: 'bottom' });
+      const hint = e?.response?.data?.message ?? e?.message ?? 'unknown error';
+      Toast.show({ type: 'info', text1: 'Showing offline data', text2: hint, position: 'bottom' });
     } finally {
       setLoading(false);
       setRefreshing(false);

@@ -8,6 +8,7 @@ import {
   Alert, ActivityIndicator,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { authService } from '../../services/authService';
 import { tripService } from '../../services/tripService';
@@ -61,6 +62,7 @@ function ToggleRow({ label, value, on, onToggle }) {
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
 export default function AccountScreen() {
+  const insets = useSafeAreaInsets();
   const { user, logout, updateUser } = useAuth();
 
   // Passport stats
@@ -193,7 +195,7 @@ export default function AccountScreen() {
     : '—';
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.container} contentContainerStyle={[styles.content, { paddingTop: insets.top }]}>
 
       {/* ── Passport header card ── */}
       <View style={styles.passportCard}>

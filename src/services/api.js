@@ -2,6 +2,7 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
+import { authEvents } from '../utils/authEvents';
 
 // Dynamically resolve the backend IP from Expo's dev server host.
 // This works for both physical devices and emulators without hardcoding an IP.
@@ -35,7 +36,9 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
-    if (error.response?.status === 401 && !original._retry) {
+    const status = error.response?.status;
+    // 401 = unauthenticated, 403 = Spring Security 6 also returns this for expired tokens
+    if ((status === 401 || status === 403) && !original._retry) {
       original._retry = true;
       try {
         const refreshToken = await SecureStore.getItemAsync('refreshToken');
@@ -48,6 +51,7 @@ api.interceptors.response.use(
         await SecureStore.deleteItemAsync('jwt');
         await SecureStore.deleteItemAsync('refreshToken');
         await SecureStore.deleteItemAsync('user');
+        authEvents.forceLogout();
       }
     }
     return Promise.reject(error);

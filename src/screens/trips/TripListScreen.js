@@ -4,15 +4,18 @@ import {
   ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { tripService } from '../../services/tripService';
 import { dbService } from '../../services/dbService';
 import { formatCurrency } from '../../utils/currency';
+import { toTimestamp } from '../../utils/dateUtils';
 import { useAuth } from '../../context/AuthContext';
 import Toast from 'react-native-toast-message';
 import { C, F } from '../../theme/postage';
 
 export default function TripListScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +61,7 @@ export default function TripListScreen({ navigation }) {
       for (const t of serverTrips) {
         await dbService.saveTrip({
           id: t.id, name: t.name, baseCurrency: t.baseCurrency,
-          createdAt: new Date(t.createdAt).getTime(),
+          createdAt: toTimestamp(t.createdAt),
         });
       }
       setTrips(serverTrips);
@@ -194,7 +197,7 @@ export default function TripListScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: 20 + insets.top }]}>
         <View>
           <Text style={styles.headerMono}>Hello, {user?.displayName?.split(' ')[0]}</Text>
           <Text style={styles.headerTitle}>My Trips</Text>

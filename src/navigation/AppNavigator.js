@@ -111,7 +111,7 @@ function AppStack() {
   return (
     <Stack.Navigator screenOptions={STACK_HEADER}>
       <Stack.Screen name="Main"         component={AppTabs}           options={{ headerShown: false }} />
-      <Stack.Screen name="CreateTrip"   component={CreateTripScreen}  options={{ title: 'New Trip' }} />
+      <Stack.Screen name="CreateTrip"   component={CreateTripScreen}  options={{ headerShown: false }} />
       <Stack.Screen name="TripDetail"   component={TripDetailScreen}  options={{ title: '' }} />
       <Stack.Screen name="AddExpense"   component={AddExpenseScreen}  options={{ title: 'New Entry' }} />
       <Stack.Screen name="EditExpense"  component={EditExpenseScreen} options={{ title: 'Edit Entry' }} />

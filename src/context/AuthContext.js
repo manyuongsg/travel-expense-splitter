@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import { authService } from '../services/authService';
+import { authEvents } from '../utils/authEvents';
 
 const AuthContext = createContext(null);
 
@@ -20,6 +21,15 @@ export function AuthProvider({ children }) {
         setLoading(false);
       }
     })();
+  }, []);
+
+  useEffect(() => {
+    return authEvents.onForceLogout(() => {
+      SecureStore.deleteItemAsync('jwt');
+      SecureStore.deleteItemAsync('refreshToken');
+      SecureStore.deleteItemAsync('user');
+      setUser(null);
+    });
   }, []);
 
   const _persist = async (data) => {

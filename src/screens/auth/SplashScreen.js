@@ -4,6 +4,7 @@
  */
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, G, Line } from 'react-native-svg';
 import { C, F } from '../../theme/postage';
 import { StampBorder, Postmark, VoyageLogo } from '../../components/PostageElements';
@@ -12,6 +13,7 @@ const SG_RED = '#c8102e';
 const ORCHID  = '#7a5ba8';
 
 export default function SplashScreen({ onContinue }) {
+  const insets = useSafeAreaInsets();
   const progress = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -27,12 +29,12 @@ export default function SplashScreen({ onContinue }) {
   return (
     <View style={styles.container}>
       {/* Top-right postmark */}
-      <View style={styles.postmarkPos}>
+      <View style={[styles.postmarkPos, { top: 38 + insets.top }]}>
         <Postmark city="SINGAPORE" date="MAR 2026" size={68} color={C.stamp} tilt={12} />
       </View>
 
       {/* Address lines (left edge flourish) */}
-      <View style={styles.addrLines}>
+      <View style={[styles.addrLines, { top: 80 + insets.top }]}>
         <View style={[styles.addrLine, { width: 80, opacity: 0.5 }]} />
         <View style={[styles.addrLine, { width: 60, opacity: 0.35 }]} />
         <View style={[styles.addrLine, { width: 70, opacity: 0.35 }]} />
