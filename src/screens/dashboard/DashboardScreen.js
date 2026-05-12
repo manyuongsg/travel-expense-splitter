@@ -8,6 +8,7 @@ import {
   ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { tripService } from '../../services/tripService';
 import { expenseService } from '../../services/expenseService';
@@ -20,6 +21,7 @@ import {
 } from '../../components/PostageElements';
 
 export default function DashboardScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -102,7 +104,7 @@ export default function DashboardScreen({ navigation }) {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => fetchTrips(true)} tintColor={C.stamp} />}
     >
       {/* ── Status bar row ── */}
-      <View style={styles.statusRow}>
+      <View style={[styles.statusRow, { paddingTop: 14 + insets.top }]}>
         <Pressable onPress={() => navigation.navigate('Balances')} hitSlop={8}>
           <MonoLabel size={11} color={C.ink} tracking={0.5} style={{ opacity: 0.7 }}>
             {user?.displayName?.split(' ')[0]?.toUpperCase() ?? 'TRAVELLER'}

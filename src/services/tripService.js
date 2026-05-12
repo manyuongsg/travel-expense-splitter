@@ -11,8 +11,12 @@ export const tripService = {
     return data;
   },
 
-  create: async (name, baseCurrency, homeCurrency) => {
-    const { data } = await api.post('/trips', { name, baseCurrency, homeCurrency });
+  create: async (name, baseCurrency, homeCurrency, destinations = [], startDate = null, endDate = null) => {
+    const payload = { name, baseCurrency, homeCurrency };
+    if (destinations.length > 0) payload.destinations = destinations;
+    if (startDate) payload.startDate = startDate;
+    if (endDate) payload.endDate = endDate;
+    const { data } = await api.post('/trips', payload);
     return data;
   },
 
