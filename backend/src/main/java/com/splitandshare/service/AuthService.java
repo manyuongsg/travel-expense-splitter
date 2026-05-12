@@ -10,6 +10,7 @@ import com.splitandshare.repository.ExpenseRepository;
 import com.splitandshare.repository.TripRepository;
 import com.splitandshare.repository.UserRepository;
 import com.splitandshare.security.JwtService;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -47,6 +48,7 @@ public class AuthService {
             .passwordHash(passwordEncoder.encode(req.getPassword()))
             .displayName(req.getDisplayName())
             .build();
+        user.setId(generateNextUserId());
         userRepository.save(user);
         return buildResponse(user);
     }
@@ -66,19 +68,36 @@ public class AuthService {
         String email = payload.getEmail();
         String name = (String) payload.get("name");
 
-        User user = userRepository.findByGoogleId(googleId)
-            .orElseGet(() -> userRepository.findByEmail(email)
-                .map(existing -> {
-                    existing.setGoogleId(googleId);
-                    return userRepository.save(existing);
-                })
-                .orElseGet(() -> userRepository.save(User.builder()
+        User user = userRepository.findByGoogleId(googleId).orElse(null);
+        if (user == null) {
+            user = userRepository.findByEmail(email).orElse(null);
+            if (user != null) {
+                user.setGoogleId(googleId);
+                user = userRepository.save(user);
+            } else {
+                User newUser = User.builder()
                     .email(email)
                     .googleId(googleId)
                     .displayName(name != null ? name : email)
-                    .build())));
+                    .build();
+                newUser.setId(generateNextUserId());
+                user = userRepository.save(newUser);
+            }
+        }
 
         return buildResponse(user);
+    }
+
+    private synchronized String generateNextUserId() {
+        List<String> ids = userRepository.findTopUserIdBySequence(PageRequest.of(0, 1));
+        long nextNum = 1;
+        if (!ids.isEmpty()) {
+            String lastId = ids.get(0);
+            // Parse the numeric portion after "A#"
+            nextNum = Long.parseLong(lastId.substring(2)) + 1;
+        }
+        // Pad to minimum 4 digits; naturally expands for numbers > 9999
+        return String.format("A#%04d", nextNum);
     }
 
     public AuthResponse refresh(String refreshToken) {

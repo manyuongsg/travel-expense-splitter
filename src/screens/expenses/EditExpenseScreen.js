@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, Pressable, StyleSheet,
-  ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform,
+  ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { expenseService } from '../../services/expenseService';
@@ -38,7 +38,7 @@ export default function EditExpenseScreen({ route, navigation }) {
   const [description, setDescription] = useState(expense.description ?? '');
   const [amountStr, setAmountStr] = useState((expense.amountCents / 100).toFixed(2));
   const [currency, setCurrency] = useState(expense.currency ?? tripCurrency);
-  const [category, setCategory] = useState('OTHER');
+  const [category, setCategory] = useState(expense.category ?? 'OTHER');
   const [paidById, setPaidById] = useState(expense.paidBy?.id ?? '');
   const [splitType, setSplitType] = useState(expense.splitType ?? 'EQUAL');
   const [customAmounts, setCustomAmounts] = useState(initialCustomAmounts);
@@ -87,6 +87,31 @@ export default function EditExpenseScreen({ route, navigation }) {
       }
     }
     return null;
+  };
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Expense',
+      `Delete "${expense.description}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete', style: 'destructive',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              await expenseService.delete(tripId, expense.id);
+              Toast.show({ type: 'success', text1: 'Expense deleted', position: 'bottom' });
+              navigation.goBack();
+            } catch {
+              Toast.show({ type: 'error', text1: 'Could not delete expense', position: 'bottom' });
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleSave = async () => {
@@ -269,6 +294,14 @@ export default function EditExpenseScreen({ route, navigation }) {
           }
         </Pressable>
 
+        <Pressable
+          style={[styles.deleteBtn, loading && styles.disabledBtn]}
+          onPress={handleDelete}
+          disabled={loading}
+        >
+          <Text style={styles.deleteBtnText}>DELETE EXPENSE</Text>
+        </Pressable>
+
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -349,4 +382,10 @@ const styles = StyleSheet.create({
   },
   disabledBtn: { opacity: 0.6 },
   primaryBtnText: { fontFamily: F.mono, color: '#fff', fontSize: 13, letterSpacing: 2, fontWeight: '700' },
+
+  deleteBtn: {
+    borderWidth: 1, borderColor: C.negative, borderRadius: 3, paddingVertical: 14,
+    alignItems: 'center', marginTop: 12,
+  },
+  deleteBtnText: { fontFamily: F.mono, color: C.negative, fontSize: 12, letterSpacing: 2 },
 });

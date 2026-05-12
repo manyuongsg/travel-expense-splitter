@@ -15,6 +15,7 @@ public class ExpenseRequest {
     @NotBlank @Size(min = 3, max = 3) private String currency;
     @NotBlank private String paidByMemberId;
     @NotNull private String splitType;
+    private String category;
     private BigDecimal exchangeRate;
     private List<SplitEntry> customSplits;
 
@@ -28,6 +29,8 @@ public class ExpenseRequest {
     public void setPaidByMemberId(String paidByMemberId) { this.paidByMemberId = paidByMemberId; }
     public String getSplitType() { return splitType; }
     public void setSplitType(String splitType) { this.splitType = splitType; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
     public BigDecimal getExchangeRate() { return exchangeRate; }
     public void setExchangeRate(BigDecimal exchangeRate) { this.exchangeRate = exchangeRate; }
     public List<SplitEntry> getCustomSplits() { return customSplits; }
