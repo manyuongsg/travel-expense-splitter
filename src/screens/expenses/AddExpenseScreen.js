@@ -23,6 +23,7 @@ export default function AddExpenseScreen({ route, navigation }) {
     members = [],
     currency: tripCurrency = 'SGD',
     homeCurrency = HOME_CURRENCY,
+    prefill,
   } = route.params;
   const { user } = useAuth();
 
@@ -31,10 +32,16 @@ export default function AddExpenseScreen({ route, navigation }) {
     return linked?.id ?? members[0]?.id ?? '';
   }, [members, user?.id]);
 
-  const [description, setDescription] = useState('');
-  const [amountStr, setAmountStr]     = useState('');
-  const [currency, setCurrency]       = useState(tripCurrency);
-  const [category, setCategory]       = useState('FOOD');
+  const prefillAmountStr = prefill?.amountCents
+    ? (prefill.amountCents / 100).toFixed(2)
+    : '';
+
+  const [description, setDescription] = useState(prefill?.description ?? '');
+  const [amountStr, setAmountStr]     = useState(prefillAmountStr);
+  const [currency, setCurrency]       = useState(
+    prefill?.originalCurrency ?? tripCurrency
+  );
+  const [category, setCategory]       = useState(prefill?.category ?? 'FOOD');
   const [paidById, setPaidById]       = useState(myMemberId);
   const [splitType, setSplitType]     = useState('EQUAL');
   const [customAmounts, setCustomAmounts] = useState({});
@@ -167,7 +174,7 @@ export default function AddExpenseScreen({ route, navigation }) {
             </View>
             {/* Currency pills */}
             <View style={styles.currencyPills}>
-              {[tripCurrency, ...(showToggle ? [homeCurrency] : [])].map((c) => (
+              {[...new Set([tripCurrency, ...(showToggle ? [homeCurrency] : [])])].map((c) => (
                 <Pressable
                   key={c}
                   onPress={() => setCurrency(c)}

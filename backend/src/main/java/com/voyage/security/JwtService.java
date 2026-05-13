@@ -1,4 +1,4 @@
-﻿package com.voyage.security;
+package com.voyage.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;

@@ -1,4 +1,4 @@
-﻿package com.voyage.repository;
+package com.voyage.repository;
 
 import com.voyage.entity.TripMember;
 import org.springframework.data.jpa.repository.JpaRepository;

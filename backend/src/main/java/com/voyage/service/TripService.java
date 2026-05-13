@@ -1,4 +1,4 @@
-﻿package com.voyage.service;
+package com.voyage.service;
 
 import com.voyage.dto.TripRequest;
 import com.voyage.dto.TripResponse;

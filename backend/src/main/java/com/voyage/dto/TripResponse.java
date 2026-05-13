@@ -1,4 +1,4 @@
-﻿package com.voyage.dto;
+package com.voyage.dto;
 
 import java.time.LocalDateTime;
 import java.util.List;

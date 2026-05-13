@@ -18,9 +18,10 @@ import EditTripScreen from '../screens/trips/EditTripScreen';
 import AddExpenseScreen from '../screens/expenses/AddExpenseScreen';
 import EditExpenseScreen from '../screens/expenses/EditExpenseScreen';
 import BalanceScreen from '../screens/balances/BalanceScreen';
-import FriendsScreen from '../screens/friends/FriendsScreen';
 import AccountManagementScreen from '../screens/balances/AccountManagementScreen';
 import InsightsScreen from '../screens/insights/InsightsScreen';
+import ActivityScreen from '../screens/activity/ActivityScreen';
+import ReceiptScanScreen from '../screens/scan/ReceiptScanScreen';
 import { C, F } from '../theme/postage';
 
 const Stack = createStackNavigator();
@@ -76,15 +77,6 @@ function AppTabs() {
         }}
       />
       <Tab.Screen
-        name="Friends"
-        component={FriendsScreen}
-        options={{
-          title: 'Travel Mates',
-          tabBarLabel: 'MATES',
-          tabBarIcon: ({ color, size }) => <MaterialIcons name="group" size={size} color={color} />,
-        }}
-      />
-      <Tab.Screen
         name="Balances"
         component={AccountManagementScreen}
         options={{
@@ -121,6 +113,16 @@ function AppStack() {
         name="TripInsights"
         component={InsightsScreen}
         options={{ title: 'Almanac' }}
+      />
+      <Stack.Screen
+        name="TripActivity"
+        component={ActivityScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ReceiptScan"
+        component={ReceiptScanScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

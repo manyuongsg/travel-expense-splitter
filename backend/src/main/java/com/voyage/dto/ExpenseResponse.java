@@ -1,4 +1,4 @@
-﻿package com.voyage.dto;
+package com.voyage.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

@@ -1,4 +1,4 @@
-﻿package com.voyage.config;
+package com.voyage.config;
 
 import com.voyage.security.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Value;

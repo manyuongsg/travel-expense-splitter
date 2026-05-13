@@ -176,7 +176,7 @@ export default function DashboardScreen({ navigation }) {
       <View style={styles.ticketRow}>
         <Pressable
           style={[styles.ticketBtn, styles.ticketBtnDark]}
-          onPress={() => navigation.navigate('Trips')}
+          onPress={() => navigation.navigate('CreateTrip')}
         >
           <MonoLabel size={8} tracking={1.5} color="rgba(255,255,255,0.6)">+ NEW TRIP</MonoLabel>
           <Text style={styles.ticketBtnLabel}>Plan a trip</Text>
@@ -190,6 +190,40 @@ export default function DashboardScreen({ navigation }) {
         </Pressable>
       </View>
 
+      {/* ── Secondary actions: Scan receipt + Activity ── */}
+      {trips.length > 0 && (
+        <View style={styles.secondaryRow}>
+          <Pressable
+            style={styles.secondaryBtn}
+            onPress={() => {
+              const t = trips[0];
+              navigation.navigate('ReceiptScan', {
+                tripId: t.id,
+                members: t.members ?? [],
+                currency: t.baseCurrency,
+              });
+            }}
+          >
+            <MonoLabel size={8} tracking={1.5} color={C.inkLight}>SCAN</MonoLabel>
+            <Text style={styles.secondaryBtnLabel}>Receipt →</Text>
+          </Pressable>
+          <Pressable
+            style={styles.secondaryBtn}
+            onPress={() => {
+              const t = trips[0];
+              navigation.navigate('TripActivity', {
+                tripId: t.id,
+                tripName: t.name,
+                currency: t.baseCurrency,
+              });
+            }}
+          >
+            <MonoLabel size={8} tracking={1.5} color={C.inkLight}>FEED</MonoLabel>
+            <Text style={styles.secondaryBtnLabel}>Activity →</Text>
+          </Pressable>
+        </View>
+      )}
+
       {/* ── Recent trips ── */}
       <View style={styles.section}>
         <View style={styles.sectionRow}>
@@ -200,13 +234,16 @@ export default function DashboardScreen({ navigation }) {
         </View>
 
         {recentTrips.length === 0 ? (
-          <View style={styles.emptyCard}>
+          <Pressable
+            style={styles.emptyCard}
+            onPress={() => navigation.navigate('CreateTrip')}
+          >
             <MaterialIcons name="flight-takeoff" size={36} color={C.border} />
             <SerifHead size={16} italic color={C.inkMid} style={{ marginTop: 10 }}>No trips yet</SerifHead>
             <MonoLabel size={10} style={{ marginTop: 6, textAlign: 'center' }}>
-              Tap "Plan a trip" to begin your ledger
+              Tap to begin your first ledger
             </MonoLabel>
-          </View>
+          </Pressable>
         ) : (
           recentTrips.map((trip, idx) => (
             <Pressable
@@ -303,6 +340,16 @@ const styles = StyleSheet.create({
   avatarWrap: { borderWidth: 1.5, borderColor: C.bg, borderRadius: 18 },
 
   ticketRow: { marginHorizontal: 22, marginTop: 20, flexDirection: 'row', gap: 10 },
+  secondaryRow: { marginHorizontal: 22, marginTop: 8, flexDirection: 'row', gap: 10 },
+  secondaryBtn: {
+    flex: 1, padding: 12,
+    borderWidth: 1, borderColor: `${C.ink}40`,
+    backgroundColor: C.surface,
+  },
+  secondaryBtnLabel: {
+    fontFamily: F.serif, fontSize: 16, fontStyle: 'italic', color: C.ink,
+    marginTop: 2,
+  },
   ticketBtn: {
     flex: 1, padding: 14,
     borderWidth: 1, borderColor: C.ink,
