@@ -12,10 +12,10 @@
     <relativePath/>
   </parent>
 
-  <groupId>com.splitandshare</groupId>
-  <artifactId>split-and-share</artifactId>
+  <groupId>com.voyage</groupId>
+  <artifactId>voyage</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <name>split-and-share</name>
+  <name>voyage</name>
 
   <properties>
     <java.version>17</java.version>

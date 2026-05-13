@@ -1,4 +1,4 @@
-# Split and Share
+﻿# Voyage
 
 > Stop chasing friends for money. Track every trip expense, settle debts in seconds, and see exactly where the group's money went.
 
@@ -23,12 +23,12 @@
 
 ## Key Features
 
-- **Multi-currency expenses** — log any expense in any currency with live exchange rate conversion to your home currency.
-- **Automatic debt settlement** — greedy algorithm calculates the minimum number of transfers to settle the group's balance.
-- **Spending insights (Almanac)** — category donut chart, per-member spending bar chart, and daily spend trend.
-- **Offline-first** — full balance computation works without a connection; changes queue locally and sync when back online.
-- **Google Sign-In** — server-side verified OAuth 2.0 alongside email/password auth.
-- **Voyage · Postage design** — cohesive editorial theme with serif headings, monospace labels, perforated stamp borders, and SVG postmarks.
+- **Multi-currency expenses** ??log any expense in any currency with live exchange rate conversion to your home currency.
+- **Automatic debt settlement** ??greedy algorithm calculates the minimum number of transfers to settle the group's balance.
+- **Spending insights (Almanac)** ??category donut chart, per-member spending bar chart, and daily spend trend.
+- **Offline-first** ??full balance computation works without a connection; changes queue locally and sync when back online.
+- **Google Sign-In** ??server-side verified OAuth 2.0 alongside email/password auth.
+- **Voyage 繚 Postage design** ??cohesive editorial theme with serif headings, monospace labels, perforated stamp borders, and SVG postmarks.
 
 ---
 
@@ -117,7 +117,7 @@ curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"you@example.com","password":"secret","displayName":"Alex"}'
 
-# Login — copy the accessToken from the response
+# Login ??copy the accessToken from the response
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"you@example.com","password":"secret"}'
@@ -153,7 +153,7 @@ curl http://localhost:8080/api/trips/{tripId}/balances \
 
 ### Full API Reference
 
-#### Auth — `/api/auth`
+#### Auth ??`/api/auth`
 
 | Method | Path                  | Description            |
 |--------|-----------------------|------------------------|
@@ -165,7 +165,7 @@ curl http://localhost:8080/api/trips/{tripId}/balances \
 | POST   | `/change-password`    | Change password        |
 | DELETE | `/account`            | Delete account         |
 
-#### Trips — `/api/trips`
+#### Trips ??`/api/trips`
 
 | Method | Path                            | Description                       |
 |--------|---------------------------------|-----------------------------------|
@@ -180,7 +180,7 @@ curl http://localhost:8080/api/trips/{tripId}/balances \
 | DELETE | `/{tripId}/members/{memberId}`  | Remove member                     |
 | GET    | `/{tripId}/balances`            | Compute balances & settlements    |
 
-#### Expenses — `/api/trips/{tripId}/expenses`
+#### Expenses ??`/api/trips/{tripId}/expenses`
 
 | Method | Path              | Description      |
 |--------|-------------------|------------------|
@@ -189,7 +189,7 @@ curl http://localhost:8080/api/trips/{tripId}/balances \
 | PUT    | `/{expenseId}`    | Update expense   |
 | DELETE | `/{expenseId}`    | Delete expense   |
 
-#### Exchange Rates — `/api/exchange-rates`
+#### Exchange Rates ??`/api/exchange-rates`
 
 | Method | Path                          | Description       |
 |--------|-------------------------------|-------------------|
@@ -201,40 +201,40 @@ curl http://localhost:8080/api/trips/{tripId}/balances \
 
 ```text
 travel-expense-splitter/
-├── src/
-│   ├── context/          # Auth state (AuthContext)
-│   ├── navigation/       # Tab + stack navigator (AppNavigator)
-│   ├── screens/
-│   │   ├── auth/         # SplashScreen, LoginScreen, RegisterScreen
-│   │   ├── dashboard/    # DashboardScreen (home overview)
-│   │   ├── trips/        # TripListScreen, TripDetailScreen, CreateTripScreen, EditTripScreen
-│   │   ├── expenses/     # AddExpenseScreen, EditExpenseScreen
-│   │   ├── balances/     # BalanceScreen, AccountManagementScreen
-│   │   ├── insights/     # InsightsScreen (Almanac)
-│   │   └── friends/      # FriendsScreen
-│   ├── services/         # api.js, authService, expenseService, tripService, dbService (SQLite)
-│   ├── components/       # PostageElements (SVG/styled), CategoryPieChart
-│   ├── theme/            # postage.js — colors, fonts, category definitions
-│   └── utils/            # currency, dateUtils, countries, states, authEvents
-├── backend/
-│   └── src/main/java/com/splitandshare/
-│       ├── controller/   # AuthController, TripController, ExpenseController, ExchangeRateController
-│       ├── service/      # Business logic
-│       ├── entity/       # JPA entities (User, Trip, TripMember, Expense, ExpenseSplit)
-│       ├── dto/          # Request/response objects
-│       ├── repository/   # Spring Data JPA interfaces
-│       ├── security/     # JwtAuthFilter, JwtService, UserDetailsServiceImpl
-│       └── config/       # SecurityConfig
-├── assets/               # App icons and splash screen
-├── patches/              # patch-package fixes for Metro (Windows)
-├── App.js                # Root component
-└── app.json              # Expo config
+??? src/
+??  ??? context/          # Auth state (AuthContext)
+??  ??? navigation/       # Tab + stack navigator (AppNavigator)
+??  ??? screens/
+??  ??  ??? auth/         # SplashScreen, LoginScreen, RegisterScreen
+??  ??  ??? dashboard/    # DashboardScreen (home overview)
+??  ??  ??? trips/        # TripListScreen, TripDetailScreen, CreateTripScreen, EditTripScreen
+??  ??  ??? expenses/     # AddExpenseScreen, EditExpenseScreen
+??  ??  ??? balances/     # BalanceScreen, AccountManagementScreen
+??  ??  ??? insights/     # InsightsScreen (Almanac)
+??  ??  ??? friends/      # FriendsScreen
+??  ??? services/         # api.js, authService, expenseService, tripService, dbService (SQLite)
+??  ??? components/       # PostageElements (SVG/styled), CategoryPieChart
+??  ??? theme/            # postage.js ??colors, fonts, category definitions
+??  ??? utils/            # currency, dateUtils, countries, states, authEvents
+??? backend/
+??  ??? src/main/java/com/voyage/
+??      ??? controller/   # AuthController, TripController, ExpenseController, ExchangeRateController
+??      ??? service/      # Business logic
+??      ??? entity/       # JPA entities (User, Trip, TripMember, Expense, ExpenseSplit)
+??      ??? dto/          # Request/response objects
+??      ??? repository/   # Spring Data JPA interfaces
+??      ??? security/     # JwtAuthFilter, JwtService, UserDetailsServiceImpl
+??      ??? config/       # SecurityConfig
+??? assets/               # App icons and splash screen
+??? patches/              # patch-package fixes for Metro (Windows)
+??? App.js                # Root component
+??? app.json              # Expo config
 ```
 
 > **Key conventions:**
 >
 > - All monetary values are **integer cents** end-to-end. Only convert at display boundaries via `formatCurrency` in [src/utils/currency.js](src/utils/currency.js).
-> - Backend uses manual getters/setters — Lombok is not used.
+> - Backend uses manual getters/setters ??Lombok is not used.
 > - To change the SQLite schema, bump `SCHEMA_VERSION` in [src/services/dbService.js](src/services/dbService.js) (currently v3).
 
 ---
@@ -260,7 +260,7 @@ Set-Service -Name wsearch -StartupType Disabled
 ## Roadmap
 
 - [ ] Custom split amounts (percentage and exact-value splits, not just equal)
-- [ ] Full offline sync — replay `pending_sync` queue on reconnect
+- [ ] Full offline sync ??replay `pending_sync` queue on reconnect
 - [ ] Push notifications for pending settlements
 - [ ] Export trip report as PDF / shareable summary
 - [ ] Receipt photo attachments on expenses
