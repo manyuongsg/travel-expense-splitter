@@ -6,7 +6,7 @@ const SCHEMA_VERSION = 3;
 
 async function getDb() {
   if (!db) {
-    db = await SQLite.openDatabaseAsync('splitandshare.db');
+    db = await SQLite.openDatabaseAsync('voyage.db');
     await _initSchema();
   }
   return db;
