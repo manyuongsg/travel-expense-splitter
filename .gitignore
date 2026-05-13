@@ -53,3 +53,19 @@ backend/src/main/resources/application-local.properties
 
 # Design documents (binary files, not needed to run the app)
 *.docx
+
+# Windows system files
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+*.log
+logs/
+
+# Temp files
+*.tmp
+*.temp
+
+# Claude Code local settings (personal/machine-specific config)
+.claude/settings.local.json
