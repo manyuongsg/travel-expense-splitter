@@ -1,4 +1,4 @@
-﻿package com.voyage.service;
+package com.voyage.service;
 
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;

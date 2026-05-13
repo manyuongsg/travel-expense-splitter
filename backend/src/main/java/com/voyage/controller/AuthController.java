@@ -1,4 +1,4 @@
-﻿package com.voyage.controller;
+package com.voyage.controller;
 
 import com.voyage.dto.AuthRequest;
 import com.voyage.dto.AuthResponse;

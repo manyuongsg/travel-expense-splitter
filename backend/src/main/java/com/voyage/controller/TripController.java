@@ -1,4 +1,4 @@
-﻿package com.voyage.controller;
+package com.voyage.controller;
 
 import com.voyage.dto.BalanceResponse;
 import com.voyage.dto.TripRequest;

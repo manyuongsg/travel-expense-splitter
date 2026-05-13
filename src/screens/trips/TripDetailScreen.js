@@ -37,9 +37,21 @@ export default function TripDetailScreen({ route, navigation }) {
     navigation.setOptions({
       title: tripName,
       headerRight: () => (
-        <View style={{ flexDirection: 'row', gap: 4 }}>
+        <View style={{ flexDirection: 'row', gap: 4, alignItems: 'center' }}>
           <Pressable
-            style={{ marginRight: 8 }}
+            style={{ marginRight: 6 }}
+            onPress={() => navigation.navigate('ReceiptScan', { tripId, members, currency, homeCurrency })}
+          >
+            <MonoLabel size={9} color={C.stamp} tracking={1.5}>SCAN</MonoLabel>
+          </Pressable>
+          <Pressable
+            style={{ marginRight: 6 }}
+            onPress={() => navigation.navigate('TripActivity', { tripId, tripName, currency })}
+          >
+            <MonoLabel size={9} color={C.stamp} tracking={1.5}>ACTIVITY</MonoLabel>
+          </Pressable>
+          <Pressable
+            style={{ marginRight: 6 }}
             onPress={() => navigation.navigate('TripInsights', { tripId, expenses, members, currency })}
           >
             <MonoLabel size={9} color={C.stamp} tracking={1.5}>ALMANAC</MonoLabel>
@@ -53,7 +65,7 @@ export default function TripDetailScreen({ route, navigation }) {
         </View>
       ),
     });
-  }, [navigation, tripId, tripName, currency, members, expenses]);
+  }, [navigation, tripId, tripName, currency, homeCurrency, members, expenses]);
 
   const fetchData = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);

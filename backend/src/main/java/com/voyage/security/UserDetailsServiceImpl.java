@@ -1,4 +1,4 @@
-﻿package com.voyage.security;
+package com.voyage.security;
 
 import com.voyage.entity.User;
 import com.voyage.repository.UserRepository;

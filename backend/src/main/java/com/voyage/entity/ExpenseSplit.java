@@ -1,4 +1,4 @@
-﻿package com.voyage.entity;
+package com.voyage.entity;
 
 import jakarta.persistence.*;
 

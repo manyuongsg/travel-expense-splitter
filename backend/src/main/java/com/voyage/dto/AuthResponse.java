@@ -1,4 +1,4 @@
-﻿package com.voyage.dto;
+package com.voyage.dto;
 
 public class AuthResponse {
     private String token;
