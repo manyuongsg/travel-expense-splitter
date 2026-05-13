@@ -272,4 +272,4 @@ Set-Service -Name wsearch -StartupType Disabled
 
 **License:** [MIT](LICENSE)
 
-**Contact:** [omanyu91@gmail.com](mailto:omanyu91@gmail.com)
+**Contact:** [manyuong.sg@gmail.com](mailto:manyuong.sg@gmail.com)
