@@ -1,4 +1,4 @@
-﻿# Voyage
+# Voyage
 
 > Stop chasing friends for money. Track every trip expense, settle debts in seconds, and see exactly where the group's money went.
 
@@ -18,24 +18,28 @@
 > - Add expense form with category glyphs and currency toggle
 > - Settle Up view with money-order style transfer cards
 > - Almanac insights with the category donut chart
+> - Activity feed (Dispatches) timeline
+> - Receipt scanner with parsed result sheet
 
 ---
 
 ## Key Features
 
-- **Multi-currency expenses** ??log any expense in any currency with live exchange rate conversion to your home currency.
-- **Automatic debt settlement** ??greedy algorithm calculates the minimum number of transfers to settle the group's balance.
-- **Spending insights (Almanac)** ??category donut chart, per-member spending bar chart, and daily spend trend.
-- **Offline-first** ??full balance computation works without a connection; changes queue locally and sync when back online.
-- **Google Sign-In** ??server-side verified OAuth 2.0 alongside email/password auth.
-- **Voyage 繚 Postage design** ??cohesive editorial theme with serif headings, monospace labels, perforated stamp borders, and SVG postmarks.
+- **Multi-currency expenses** — log any expense in any currency with live exchange rate conversion to your home currency.
+- **Automatic debt settlement** — greedy algorithm calculates the minimum number of transfers to settle the group's balance.
+- **Spending insights (Almanac)** — category donut chart, per-member spending bar chart, and daily spend trend.
+- **Activity feed** — chronological timeline of all expenses and settlements per trip.
+- **Receipt scanner** — scan a receipt to auto-fill the expense form with merchant, amount, and category.
+- **Offline-first** — full balance computation works without a connection; changes queue locally and sync when back online.
+- **Google Sign-In** — server-side verified OAuth 2.0 alongside email/password auth.
+- **Voyage · Postage design** — cohesive editorial theme with serif headings, monospace labels, perforated stamp borders, and SVG postmarks.
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
+| --- | --- |
 | Mobile | React Native 0.81.5 + Expo SDK 54 |
 | Navigation | React Navigation v7 (tabs + stack) |
 | UI | React Native Paper 5.13.1 |
@@ -51,10 +55,10 @@
 ### Prerequisites
 
 | Tool | Version | Download |
-|---|---|---|
-| Node.js | 18+ | https://nodejs.org |
-| Java JDK | 17 | https://adoptium.net |
-| Maven | 3.8+ | https://maven.apache.org |
+| --- | --- | --- |
+| Node.js | 18+ | [nodejs.org](https://nodejs.org) |
+| Java JDK | 17 | [adoptium.net](https://adoptium.net) |
+| Maven | 3.8+ | [maven.apache.org](https://maven.apache.org) |
 | Expo Go | latest | Play Store / App Store |
 
 ### Installation & Setup
@@ -102,8 +106,7 @@ npx expo start --clear
 
 Scan the QR code with **Expo Go** on your phone, or press `a` for an Android emulator.
 
-> **Physical device:** set `API_BASE_URL` in `src/services/api.js` to your machine's LAN IP (e.g. `http://192.168.1.x:8080/api`).  
-> **Android emulator:** keep the default `http://10.0.2.2:8080/api`.
+> **Physical device:** the app auto-resolves the backend URL from Expo's dev server `hostUri` — no manual IP configuration needed on the same LAN.
 
 ---
 
@@ -117,7 +120,7 @@ curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"email":"you@example.com","password":"secret","displayName":"Alex"}'
 
-# Login ??copy the accessToken from the response
+# Login — copy the accessToken from the response
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"you@example.com","password":"secret"}'
@@ -153,7 +156,7 @@ curl http://localhost:8080/api/trips/{tripId}/balances \
 
 ### Full API Reference
 
-#### Auth ??`/api/auth`
+#### Auth — `/api/auth`
 
 | Method | Path                  | Description            |
 |--------|-----------------------|------------------------|
@@ -165,7 +168,7 @@ curl http://localhost:8080/api/trips/{tripId}/balances \
 | POST   | `/change-password`    | Change password        |
 | DELETE | `/account`            | Delete account         |
 
-#### Trips ??`/api/trips`
+#### Trips — `/api/trips`
 
 | Method | Path                            | Description                       |
 |--------|---------------------------------|-----------------------------------|
@@ -180,7 +183,7 @@ curl http://localhost:8080/api/trips/{tripId}/balances \
 | DELETE | `/{tripId}/members/{memberId}`  | Remove member                     |
 | GET    | `/{tripId}/balances`            | Compute balances & settlements    |
 
-#### Expenses ??`/api/trips/{tripId}/expenses`
+#### Expenses — `/api/trips/{tripId}/expenses`
 
 | Method | Path              | Description      |
 |--------|-------------------|------------------|
@@ -189,7 +192,7 @@ curl http://localhost:8080/api/trips/{tripId}/balances \
 | PUT    | `/{expenseId}`    | Update expense   |
 | DELETE | `/{expenseId}`    | Delete expense   |
 
-#### Exchange Rates ??`/api/exchange-rates`
+#### Exchange Rates — `/api/exchange-rates`
 
 | Method | Path                          | Description       |
 |--------|-------------------------------|-------------------|
@@ -201,40 +204,37 @@ curl http://localhost:8080/api/trips/{tripId}/balances \
 
 ```text
 travel-expense-splitter/
-??? src/
-??  ??? context/          # Auth state (AuthContext)
-??  ??? navigation/       # Tab + stack navigator (AppNavigator)
-??  ??? screens/
-??  ??  ??? auth/         # SplashScreen, LoginScreen, RegisterScreen
-??  ??  ??? dashboard/    # DashboardScreen (home overview)
-??  ??  ??? trips/        # TripListScreen, TripDetailScreen, CreateTripScreen, EditTripScreen
-??  ??  ??? expenses/     # AddExpenseScreen, EditExpenseScreen
-??  ??  ??? balances/     # BalanceScreen, AccountManagementScreen
-??  ??  ??? insights/     # InsightsScreen (Almanac)
-??  ??  ??? friends/      # FriendsScreen
-??  ??? services/         # api.js, authService, expenseService, tripService, dbService (SQLite)
-??  ??? components/       # PostageElements (SVG/styled), CategoryPieChart
-??  ??? theme/            # postage.js ??colors, fonts, category definitions
-??  ??? utils/            # currency, dateUtils, countries, states, authEvents
-??? backend/
-??  ??? src/main/java/com/voyage/
-??      ??? controller/   # AuthController, TripController, ExpenseController, ExchangeRateController
-??      ??? service/      # Business logic
-??      ??? entity/       # JPA entities (User, Trip, TripMember, Expense, ExpenseSplit)
-??      ??? dto/          # Request/response objects
-??      ??? repository/   # Spring Data JPA interfaces
-??      ??? security/     # JwtAuthFilter, JwtService, UserDetailsServiceImpl
-??      ??? config/       # SecurityConfig
-??? assets/               # App icons and splash screen
-??? patches/              # patch-package fixes for Metro (Windows)
-??? App.js                # Root component
-??? app.json              # Expo config
+├── src/
+│   ├── context/          # Auth state (AuthContext)
+│   ├── navigation/       # Tab + stack navigator (AppNavigator)
+│   ├── screens/
+│   │   ├── auth/         # SplashScreen, LoginScreen, RegisterScreen
+│   │   ├── dashboard/    # DashboardScreen (home overview)
+│   │   ├── trips/        # TripListScreen, TripDetailScreen, CreateTripScreen, EditTripScreen
+│   │   ├── expenses/     # AddExpenseScreen, EditExpenseScreen
+│   │   ├── balances/     # BalanceScreen, AccountManagementScreen
+│   │   ├── insights/     # InsightsScreen (Almanac)
+│   │   ├── activity/     # ActivityScreen (Dispatches feed)
+│   │   └── scan/         # ReceiptScanScreen
+│   ├── services/         # api.js, authService, expenseService, tripService, dbService (SQLite)
+│   ├── components/       # PostageElements (SVG/styled), CategoryPieChart
+│   ├── theme/            # postage.js — colors, fonts, category definitions
+│   └── utils/            # currency, dateUtils, countries, states, authEvents
+└── backend/
+    └── src/main/java/com/voyage/
+        ├── controller/   # AuthController, TripController, ExpenseController, ExchangeRateController
+        ├── service/      # Business logic
+        ├── entity/       # JPA entities (User, Trip, TripMember, Expense, ExpenseSplit)
+        ├── dto/          # Request/response objects
+        ├── repository/   # Spring Data JPA interfaces
+        ├── security/     # JwtAuthFilter, JwtService, UserDetailsServiceImpl
+        └── config/       # SecurityConfig
 ```
 
 > **Key conventions:**
 >
 > - All monetary values are **integer cents** end-to-end. Only convert at display boundaries via `formatCurrency` in [src/utils/currency.js](src/utils/currency.js).
-> - Backend uses manual getters/setters ??Lombok is not used.
+> - Backend uses manual getters/setters — Lombok is not used.
 > - To change the SQLite schema, bump `SCHEMA_VERSION` in [src/services/dbService.js](src/services/dbService.js) (currently v3).
 
 ---
@@ -259,11 +259,10 @@ Set-Service -Name wsearch -StartupType Disabled
 
 ## Roadmap
 
-- [ ] Custom split amounts (percentage and exact-value splits, not just equal)
-- [ ] Full offline sync ??replay `pending_sync` queue on reconnect
+- [ ] Full offline sync — replay `pending_sync` queue on reconnect
 - [ ] Push notifications for pending settlements
 - [ ] Export trip report as PDF / shareable summary
-- [ ] Receipt photo attachments on expenses
+- [ ] Real camera integration for receipt scanning (currently simulated)
 - [ ] Dark mode
 
 ---
