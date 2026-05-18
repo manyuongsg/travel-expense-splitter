@@ -1,17 +1,24 @@
 package com.voyage.service;
 
-import com.voyage.dto.BalanceResponse;
-import com.voyage.entity.*;
-import com.voyage.repository.ExpenseRepository;
-import com.voyage.repository.TripRepository;
-import org.junit.jupiter.api.Test;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import com.voyage.dto.BalanceResponse;
+import com.voyage.entity.Expense;
+import com.voyage.entity.ExpenseSplit;
+import com.voyage.entity.Trip;
+import com.voyage.entity.TripMember;
+import com.voyage.entity.User;
+import com.voyage.repository.ExpenseRepository;
+import com.voyage.repository.TripRepository;
 
 class BalanceServiceTest {
 
@@ -80,8 +87,8 @@ class BalanceServiceTest {
         assertEquals(1, resp.getSettlements().size());
 
         BalanceResponse.Settlement settlement = resp.getSettlements().get(0);
-        assertEquals("m2", settlement.getFrom().getId());
-        assertEquals("m1", settlement.getTo().getId());
+        assertEquals("m2", settlement.getFromUser().getId());
+        assertEquals("m1", settlement.getToUser().getId());
         assertEquals(500L, settlement.getAmountCents());
     }
 }
