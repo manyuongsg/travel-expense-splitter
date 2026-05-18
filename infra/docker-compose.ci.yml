@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: voyage
+      POSTGRES_USER: voyage
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+  api:
+    build: { context: ../apps/api, dockerfile: ../../infra/docker/api.Dockerfile }
+    depends_on: [postgres]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/voyage
+      SPRING_DATASOURCE_USERNAME: voyage
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      VOYAGE_JWT_SECRET: ${VOYAGE_JWT_SECRET}
+      APP_GOOGLE_CLIENT_ID: ${APP_GOOGLE_CLIENT_ID}
+    ports: ["8080:8080"]
+
+volumes:
+  pgdata:

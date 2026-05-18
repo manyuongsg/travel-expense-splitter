@@ -8,8 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import com.voyage.dto.BalanceResponse;
 import com.voyage.entity.Expense;
@@ -19,6 +17,10 @@ import com.voyage.entity.TripMember;
 import com.voyage.entity.User;
 import com.voyage.repository.ExpenseRepository;
 import com.voyage.repository.TripRepository;
+import com.voyage.service.BalanceService;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class BalanceServiceTest {
 

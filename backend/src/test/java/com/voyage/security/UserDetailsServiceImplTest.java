@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import com.voyage.entity.User;
 import com.voyage.repository.UserRepository;
+import com.voyage.security.UserDetailsServiceImpl;
 
 class UserDetailsServiceImplTest {
 

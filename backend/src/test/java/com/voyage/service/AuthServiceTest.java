@@ -17,6 +17,8 @@ import com.voyage.repository.ExpenseRepository;
 import com.voyage.repository.TripRepository;
 import com.voyage.repository.UserRepository;
 import com.voyage.security.JwtService;
+import com.voyage.service.AuthService;
+import com.voyage.service.GoogleAuthService;
 
 class AuthServiceTest {
 
