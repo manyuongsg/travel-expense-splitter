@@ -5,9 +5,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import com.voyage.dto.ExpenseRequest;
 import com.voyage.dto.ExpenseResponse;
@@ -16,6 +13,11 @@ import com.voyage.entity.TripMember;
 import com.voyage.repository.ExpenseRepository;
 import com.voyage.repository.TripMemberRepository;
 import com.voyage.repository.TripRepository;
+import com.voyage.service.ExpenseService;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class ExpenseServiceTest {
 
