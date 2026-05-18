@@ -1,0 +1,43 @@
+# Local development stack — PostgreSQL + API
+# Usage:
+#   cp .env.example .env   # fill in POSTGRES_PASSWORD, VOYAGE_JWT_SECRET, APP_GOOGLE_CLIENT_ID
+#   docker compose up
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: voyage
+      POSTGRES_USER: voyage
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U voyage"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ../apps/api
+      dockerfile: ../../infra/docker/api.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/voyage
+      SPRING_DATASOURCE_USERNAME: voyage
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      VOYAGE_JWT_SECRET: ${VOYAGE_JWT_SECRET}
+      APP_GOOGLE_CLIENT_ID: ${APP_GOOGLE_CLIENT_ID}
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:

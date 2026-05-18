@@ -36,15 +36,15 @@ yarn-error.*
 # TypeScript
 *.tsbuildinfo
 
-# Backend - Maven build output
-backend/target/
+# API - Maven build output
+apps/api/target/
 
-# Backend - H2 database files (dev data, not for source control)
-backend/data/
+# API - H2 database files (dev data, not for source control)
+apps/api/data/
 
-# Backend - contains real secrets, never commit
-backend/src/main/resources/application.properties
-backend/src/main/resources/application-local.properties
+# API - contains real secrets, never commit
+apps/api/src/main/resources/application.properties
+apps/api/src/main/resources/application-local.properties
 
 # IDE
 .idea/
@@ -62,6 +62,7 @@ $RECYCLE.BIN/
 # Logs
 *.log
 logs/
+expo_build.log
 
 # Temp files
 *.tmp
@@ -71,3 +72,15 @@ logs/
 .claude/
 !.claude/settings.json
 CLAUDE.md
+
+# Expo device registry (machine-local)
+.expo/devices.json
+
+# Android release artifacts (never commit production keys)
+apps/mobile/android/app/release/
+apps/mobile/android/app/*.jks
+apps/mobile/android/app/*.p12
+
+# Mobile paths
+apps/mobile/node_modules/
+apps/mobile/.expo/

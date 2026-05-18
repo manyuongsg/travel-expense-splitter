@@ -73,7 +73,7 @@ cd travel-expense-splitter
 #### 2. Backend setup
 
 ```bash
-cd backend
+cd apps/api
 cp src/main/resources/application.properties.example src/main/resources/application.properties
 ```
 
@@ -220,7 +220,9 @@ travel-expense-splitter/
 │   ├── components/       # PostageElements (SVG/styled), CategoryPieChart
 │   ├── theme/            # postage.js — colors, fonts, category definitions
 │   └── utils/            # currency, dateUtils, countries, states, authEvents
-└── backend/
+└── apps/
+  ├── api/
+  └── mobile/
     └── src/main/java/com/voyage/
         ├── controller/   # AuthController, TripController, ExpenseController, ExchangeRateController
         ├── service/      # Business logic
