@@ -45,8 +45,6 @@ apps/api/data/
 # API - contains real secrets, never commit
 apps/api/src/main/resources/application.properties
 apps/api/src/main/resources/application-local.properties
-apps/api/src/src/main/resources/application.properties
-apps/api/src/src/main/resources/application-local.properties
 
 # IDE
 .idea/
@@ -83,6 +81,6 @@ apps/mobile/android/app/release/
 apps/mobile/android/app/*.jks
 apps/mobile/android/app/*.p12
 
-# Updated paths after monorepo move
+# Mobile paths
 apps/mobile/node_modules/
 apps/mobile/.expo/
